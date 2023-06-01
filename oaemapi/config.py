@@ -13,6 +13,6 @@ WFS_EPSG = 25832
 WFS_URL = "https://www.wfs.nrw.de/geobasis/wfs_nw_3d-gebaeudemodell_lod1"
 WFS_BASE_REQUEST = "Service=WFS&REQUEST=GetFeature&VERSION=1.1.0&TYPENAME=bldg:Building"
 
-HOST = "127.0.0.1"
+HOST = "0.0.0.0"
 PORT = 8000
 LOG_LEVEL = logging.INFO
