@@ -6,7 +6,7 @@ import numpy as np
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from pointset import PointSet
-from oaemapi.config import GEOID_FILE, HOST
+from oaemapi.config import GEOID_FILE, HOST, PORT, LOG_LEVEL
 
 from oaemapi.geoid import Geoid, Interpolator
 from oaemapi.neighborhood import Neighborhood
@@ -15,7 +15,7 @@ import plotly.graph_objects as go
 
 logging.basicConfig(
     format="%(levelname)-8s %(asctime)s.%(msecs)03d - %(message)s",
-    level=logging.INFO,
+    level=LOG_LEVEL,
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
@@ -100,4 +100,4 @@ def get_oaem(position: str, epsg: int) -> Oaem:
 def main():
     import uvicorn
 
-    uvicorn.run(app, host=HOST, port=8000)
+    uvicorn.run(app, host=HOST, port=PORT)
