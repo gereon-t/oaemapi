@@ -63,7 +63,18 @@ async def plot(pos_x: float, pos_y: float, pos_z: float, epsg: int, width: int =
             text="Obstruction Adaptive Elevation Mask",
         ),
         layout=go.Layout(
-            autosize=True,
+            title={
+                "text": "Obstruction Adaptive Elevation Mask",
+                "x": 0.5,
+                "y": 1,
+                "xanchor": "center",
+                "yanchor": "top",
+                "font": {
+                    "family": "Arial",
+                    "size": 24,
+                    "color": "black",
+                },
+            },
             polar=dict(
                 angularaxis=dict(direction="clockwise", rotation=90),
                 radialaxis=dict(angle=90),
