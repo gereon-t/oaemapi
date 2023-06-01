@@ -3,6 +3,7 @@ import logging
 import matplotlib.pyplot as plt
 import numpy as np
 from pointset import PointSet
+from oaemapi.config import N_MAX_DIST, N_RANGE, N_RES, WFS_EPSG
 
 from oaemapi.wfs_lod1 import request_wfs_lod1
 
@@ -15,13 +16,13 @@ class Neighborhood:
     Class representing the neighborhood of a requested position
     """
 
-    def __init__(self, pos: PointSet, nrange: float) -> None:
+    def __init__(self, pos: PointSet, nrange: float= N_RANGE) -> None:
+        pos.to_epsg(WFS_EPSG)
         self.pos = pos
-
         # round pos
-        neighborhood_pos = pos.round_to(50)
+        neighborhood_pos = pos.round_to(N_MAX_DIST)
         # round pos
-        self.oaem_pos = pos.round_to(0.05)
+        self.oaem_pos = pos.round_to(N_RES)
 
         self.nrange = nrange
         self.buildings = request_wfs_lod1(pos=neighborhood_pos, nrange=nrange)

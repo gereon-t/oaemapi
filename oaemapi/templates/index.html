@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Plotly Graph</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+    <div id="plot"></div>
+
+    <script>
+        // Fetch the plot data using AJAX
+        function request_oaem(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            let height = position.coords.altitude;
+
+            const winwidth = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth) - 20;
+            const winheight = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight) - 20;
+
+            if (height === null) {
+                height = 0;
+            }
+
+            console.info(`Position: ${latitude}, ${longitude}, ${height}`);
+
+            $.ajax({
+                url: `/plot?pos_x=${latitude}&pos_y=${longitude}&pos_z=${height}&epsg=4326&width=${winwidth}&height=${winheight}`,
+                type: "GET",
+                dataType: "json",
+                success: function (response) {
+                    var fig = JSON.parse(response.plot);
+                    Plotly.newPlot("plot", fig.data, fig.layout);
+                }
+            });
+        }
+
+        function handle_error(error) {
+            console.error('Error getting position:', error);
+        }
+
+        function updatePlot() {
+            // Request user's position using Geolocation API
+            navigator.geolocation.getCurrentPosition(
+                request_oaem,
+                handle_error
+            );
+        }
+
+        // Update the polar plot every second
+        setInterval(updatePlot, 1000);
+    </script>
+</body>
+
+</html>

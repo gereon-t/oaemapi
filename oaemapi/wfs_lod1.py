@@ -6,21 +6,16 @@ import requests
 import xmltodict
 from pointset import PointSet
 
+from oaemapi.config import WFS_BASE_REQUEST, WFS_EPSG, WFS_URL
 from oaemapi.util import interp_face
 
 # logger configuration
 logger = logging.getLogger("root")
 
 
-EPSG = 25832
-WFS_URL = "https://www.wfs.nrw.de/geobasis/wfs_nw_3d-gebaeudemodell_lod1"
-
-BASE_REQUEST = "Service=WFS&REQUEST=GetFeature&VERSION=1.1.0&TYPENAME=bldg:Building"
-
-
 @lru_cache(maxsize=256)
 def request_wfs_lod1(pos: PointSet, nrange: float = 100) -> list:
-    pos.to_epsg(EPSG)
+    pos.to_epsg(WFS_EPSG)
     logger.debug("sending request ...")
     request_url = create_request(pos=pos, nrange=nrange)
     response = requests.get(request_url)
@@ -40,8 +35,8 @@ def request_wfs_lod1(pos: PointSet, nrange: float = 100) -> list:
 def create_request(pos: PointSet, nrange: float) -> str:
     bbox_bl = [pos.x - nrange, pos.y - nrange]
     bbox_tr = [pos.x + nrange, pos.y + nrange]
-    bbox = f"BBOX={bbox_bl[0]},{bbox_bl[1]},{bbox_tr[0]},{bbox_tr[1]},urn:ogc:def:crs:EPSG::{EPSG}"
-    return f"{WFS_URL}?{BASE_REQUEST}&{bbox}"
+    bbox = f"BBOX={bbox_bl[0]},{bbox_bl[1]},{bbox_tr[0]},{bbox_tr[1]},urn:ogc:def:crs:EPSG::{WFS_EPSG}"
+    return f"{WFS_URL}?{WFS_BASE_REQUEST}&{bbox}"
 
 
 def parse_lod1solid(lod1solid: dict) -> dict:

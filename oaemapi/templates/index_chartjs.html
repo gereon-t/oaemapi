@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Polar Plot App</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div style="width: 100%; height: 100%;">
+        <canvas id="polarPlot" style="width: 100%; height: 100%;"></canvas>
+    </div>
+
+
+    <script>
+        // Get the canvas element
+        const canvas = document.getElementById('polarPlot');
+        const ctx = canvas.getContext('2d');
+
+        // Create the polar plot using Chart.js
+        const polarPlot = new Chart(ctx, {
+            type: 'polarArea',
+            data: [],
+            options: {
+                responsive: true,
+                scales: {
+                    r: {
+                        beginAtZero: false,
+                        max: 1.570796326794896,
+                        min: 0,
+                        ticks: {
+                            stepSize: 0.17453292519943295
+                        },
+                    },
+                },
+                animation: {
+                    animateRotate: false,
+                    animateScale: false
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Obstruction Adaptive Elevation Mask',
+                        font: {
+                            size: 40
+                        }
+                    }
+                }
+            }
+        });
+
+        function handle_response(data) {
+            console.info("Handling response");
+            // data is in azimuth:elevation, azimuth:elevation, ... format
+            // Split the data into azimuth and elevation arrays
+            const azimuth = [];
+            const elevation = [];
+            const data_array = data.Data.split(',');
+            console.info(data_array);
+
+            // Loop through the data array and split the azimuth and elevation values
+            for (let i = 0; i < data_array.length; i++) {
+                const azimuth_elevation = data_array[i].split(':');
+                azimuth.push(azimuth_elevation[0]);
+                elevation.push(azimuth_elevation[1]);
+            }
+
+            // Update the polar plot
+            polarPlot.data = {
+                labels: azimuth,
+                datasets: [{
+                    data: elevation,
+                    backgroundColor: 'rgba(205, 218, 250, 1)',
+                    borderColor: 'rgba(0, 0, 0, 0)'
+                }]
+            };
+
+            console.info("Azimuth: " + azimuth);
+            console.info("Elevation: " + elevation);
+
+
+            polarPlot.update();
+        }
+
+        function request_oaem(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            let height = position.coords.altitude;
+
+            if (height === null) {
+                height = 0;
+            }
+
+            console.info(`Position: ${latitude}, ${longitude}, ${height}`);
+
+            // Send position data to the server
+            fetch(`/api?pos_x=${latitude}&pos_y=${longitude}&pos_z=${height}&epsg=4326`)
+                .then(response => response.json())
+                .then(data => handle_response(data))
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function handle_error(error) {
+            console.error('Error getting position:', error);
+        }
+
+        // Function to periodically request the user's position and update the polar plot
+        function updatePlot() {
+            // Request user's position using Geolocation API
+            navigator.geolocation.getCurrentPosition(
+                request_oaem,
+                handle_error
+            );
+        }
+
+        // Update the polar plot every second
+        setInterval(updatePlot, 1000);
+    </script>
+</body>
+
+</html>

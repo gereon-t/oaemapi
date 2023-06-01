@@ -6,7 +6,7 @@ from pandas import read_csv
 from pointset import PointSet
 from scipy.interpolate import NearestNDInterpolator, LinearNDInterpolator
 
-INTERP_EPSG = 25832
+from oaemapi.config import GEOID_EPSG, GEOID_INTERP_EPSG, GEOID_RES
 
 # logger configuration
 logger = logging.getLogger("root")
@@ -25,7 +25,7 @@ class Geoid:
     def __init__(
         self,
         filename: str,
-        epsg: int = 4258,
+        epsg: int = GEOID_EPSG,
         interpolator: Interpolator = Interpolator.LINEAR,
     ):
         # read csv
@@ -33,7 +33,7 @@ class Geoid:
         data = data.to_numpy()
 
         self.pos = PointSet(xyz=data[:, 0:3], epsg=epsg)
-        self.pos.to_epsg(INTERP_EPSG)
+        self.pos.to_epsg(GEOID_INTERP_EPSG)
 
         # Interpolator
         if interpolator == Interpolator.NEAREST:
@@ -50,7 +50,9 @@ class Geoid:
         """
         Get geoid undulation for query position
         """
-        pos.to_epsg(INTERP_EPSG)
+        pos.to_epsg(GEOID_INTERP_EPSG)
+        pos.round_to(GEOID_RES)
+        logger.info(f"Interpolating geoid undulation for position: {pos}")
 
         # interpolate
         return self.__interp(pos.x, pos.y)

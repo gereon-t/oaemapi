@@ -88,7 +88,7 @@ class Oaem:
         azimuth_base_grid[az_indices] = azimuth
         elevation_base_grid[az_indices] = elevation
         return azimuth_base_grid, elevation_base_grid
-        
+
     @property
     def az_el_str(self) -> str:
         return "".join(f"{az:.3f}:{el:.3f}," for az, el in zip(self.azimuth, self.elevation))

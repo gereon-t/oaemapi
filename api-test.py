@@ -14,7 +14,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-API_URL = "http://127.0.0.1:8000"
+API_URL = "http://127.0.0.1:8000/api"
 
 EPSG = 25832
 
