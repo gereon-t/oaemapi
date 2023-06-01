@@ -1,11 +1,10 @@
 import logging
-
-import matplotlib.pyplot as plt
 import numpy as np
 from pointset import PointSet
 from oaemapi.config import N_MAX_DIST, N_RANGE, N_RES, WFS_EPSG
 
-from oaemapi.wfs_lod1 import request_wfs_lod1
+from oaemapi.wfs.request import request_wfs_lod1
+from oaemapi.wfs.response import parse_response
 
 # logger configuration
 logger = logging.getLogger("root")
@@ -16,16 +15,17 @@ class Neighborhood:
     Class representing the neighborhood of a requested position
     """
 
-    def __init__(self, pos: PointSet, nrange: float= N_RANGE) -> None:
-        pos.to_epsg(WFS_EPSG)
-        self.pos = pos
-        # round pos
-        neighborhood_pos = pos.round_to(N_MAX_DIST)
-        # round pos
+    def __init__(self, pos: PointSet, nrange: float = N_RANGE) -> None:
+        self.pos = pos.to_epsg(WFS_EPSG, inplace=False)
+        self.neighborhood_pos = pos.round_to(N_MAX_DIST)
         self.oaem_pos = pos.round_to(N_RES)
-
         self.nrange = nrange
-        self.buildings = request_wfs_lod1(pos=neighborhood_pos, nrange=nrange)
+
+        self.buildings = self.request_buildings()
+
+    def request_buildings(self) -> list:
+        response = request_wfs_lod1(pos=self.neighborhood_pos, nrange=self.nrange)
+        return parse_response(response)
 
     def all_boundaries(self, key: str = "boundary") -> np.ndarray:
         all_list = []
@@ -40,18 +40,6 @@ class Neighborhood:
             return np.unique(all_array, axis=0)
 
         return np.array([])
-
-    def plot_2d(self) -> None:
-
-        bndrs = self.all_boundaries()
-
-        if len(bndrs) > 0:
-            plt.figure()
-            plt.axis("equal")
-            plt.xlabel("x [m]")
-            plt.ylabel("y [m]")
-            plt.plot(bndrs[:, 0], bndrs[:, 1], "k")
-            plt.plot(self.pos.x, self.pos.y, ".r")
 
     def __key(self):
         return self.oaem_pos

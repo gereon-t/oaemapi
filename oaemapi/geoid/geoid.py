@@ -1,10 +1,10 @@
+import logging
 from enum import Enum
 from functools import lru_cache
-import logging
-from pandas import read_csv
 
+from pandas import read_csv
 from pointset import PointSet
-from scipy.interpolate import NearestNDInterpolator, LinearNDInterpolator
+from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
 
 from oaemapi.config import GEOID_EPSG, GEOID_INTERP_EPSG, GEOID_RES
 

@@ -16,6 +16,7 @@
             const latitude = position.coords.latitude;
             const longitude = position.coords.longitude;
             let height = position.coords.altitude;
+            let heading = position.coords.heading;
 
             const winwidth = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth) - 20;
             const winheight = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight) - 20;
@@ -24,10 +25,14 @@
                 height = 0;
             }
 
+            if (heading === null) {
+                heading = 0;
+            }
+
             console.info(`Position: ${latitude}, ${longitude}, ${height}`);
 
             $.ajax({
-                url: `/plot?pos_x=${latitude}&pos_y=${longitude}&pos_z=${height}&epsg=4326&width=${winwidth}&height=${winheight}`,
+                url: `/plot?pos_x=${latitude}&pos_y=${longitude}&pos_z=${height}&epsg=4326&width=${winwidth}&height=${winheight}&heading=${heading}`,
                 type: "GET",
                 dataType: "json",
                 success: function (response) {

@@ -4,7 +4,7 @@ N_RANGE = 50
 N_RES = 0.05
 N_MAX_DIST = 50
 
-GEOID_FILE = "./oaemapi/resources/GCG2016NRW.txt"
+GEOID_FILE = "./oaemapi/geoid/data.txt"
 GEOID_EPSG = 4258
 GEOID_INTERP_EPSG = 25832
 GEOID_RES = 20
@@ -16,3 +16,8 @@ WFS_BASE_REQUEST = "Service=WFS&REQUEST=GetFeature&VERSION=1.1.0&TYPENAME=bldg:B
 HOST = "0.0.0.0"
 PORT = 8000
 LOG_LEVEL = logging.INFO
+
+OAEM_PARAM = 1.5
+GRID_RES = 1e-4
+WIN_SIZE = 3
+FACE_INTERP_RES = 0.1
