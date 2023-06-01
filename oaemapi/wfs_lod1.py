@@ -16,8 +16,9 @@ logger = logging.getLogger("root")
 @lru_cache(maxsize=256)
 def request_wfs_lod1(pos: PointSet, nrange: float = 100) -> list:
     pos.to_epsg(WFS_EPSG)
-    logger.debug("sending request ...")
+
     request_url = create_request(pos=pos, nrange=nrange)
+    logger.debug(f"Sending request {request_url}")
     response = requests.get(request_url)
     logger.debug(f"received answer. Status code: {response.status_code}")
 
@@ -70,6 +71,12 @@ def parse_gml(gml: dict) -> list:
 
     bldg_list = []
     cityobject_members = gml.get("core:CityModel", {}).get("core:cityObjectMember", {})
+
+    if len(cityobject_members) == 0:
+        return bldg_list
+
+    if not isinstance(cityobject_members, list):
+        cityobject_members = [cityobject_members]
 
     for cobj in cityobject_members:
         bldg = cobj.get("bldg:Building", {})

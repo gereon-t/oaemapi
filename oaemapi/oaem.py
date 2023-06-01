@@ -12,11 +12,7 @@ WIN_SIZE = 3
 
 
 class Oaem:
-    def __init__(
-        self,
-        azimuth: np.ndarray = np.linspace(0, 2 * np.pi, 360),
-        elevation: np.ndarray = np.zeros((360, 1)),
-    ):
+    def __init__(self, azimuth: np.ndarray, elevation: np.ndarray):
         self.azimuth = azimuth
         self.elevation = elevation
 
@@ -30,7 +26,8 @@ class Oaem:
         )
         if not neighborhood.buildings:
             logger.warning("No buildings within specified range!")
-            return Oaem()
+            azimuth = np.arange(0, 2 * np.pi, np.deg2rad(output_res))
+            return Oaem(azimuth=np.arange(0, 2 * np.pi, np.deg2rad(output_res)), elevation=np.zeros(len(azimuth)))
 
         # create raw oaem
         azimuth, elevation = util.compute_az_el(

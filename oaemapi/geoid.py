@@ -52,7 +52,7 @@ class Geoid:
         """
         pos.to_epsg(GEOID_INTERP_EPSG)
         pos.round_to(GEOID_RES)
-        logger.info(f"Interpolating geoid undulation for position: {pos.xyz}")
+        logger.debug(f"Interpolating geoid undulation for position: {pos.xyz}")
 
         # interpolate
         return self.__interp(pos.x, pos.y)

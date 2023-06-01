@@ -38,14 +38,14 @@ async def index(request: Request):
 
 @app.get("/api")
 async def oaem_request(pos_x: float, pos_y: float, pos_z: float, epsg: int):
-    logging.info("Received OAEM request")
+    logging.debug("Received OAEM request")
     query_time = time()
     oaem = get_oaem(f"{pos_x},{pos_y},{pos_z}", epsg)
     oaem_str = str(oaem.az_el_str)
-    logging.info(f"Cache info: {get_oaem.cache_info()}")
+    logging.debug(f"Cache info: {get_oaem.cache_info()}")
 
     response_time = time()
-    logging.info(
+    logging.debug(
         f"Computed OAEM for position [{pos_x:.3f}, {pos_y:.3f}, {pos_z:.3f}], EPSG: {epsg} in {(response_time-query_time)*1000:.3f} ms"
     )
     return {"Data": oaem_str}
@@ -91,7 +91,7 @@ async def plot(pos_x: float, pos_y: float, pos_z: float, epsg: int, width: int =
 @lru_cache(maxsize=4096)
 def get_oaem(position: str, epsg: int) -> Oaem:
     pos = PointSet(xyz=np.fromstring(position, sep=",", dtype=float), epsg=epsg, init_local_transformer=False)
-    logging.info(f"Received position: {pos.xyz}")
+    logging.debug(f"Received position: {pos.xyz}")
     pos.z -= geoid.interpolate(pos=pos)
     neighborhood = Neighborhood(pos=pos)
     return Oaem.from_neighborhood(neighborhood=neighborhood)
