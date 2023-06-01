@@ -23,5 +23,5 @@ GRID_RES = 1e-4
 WIN_SIZE = 3
 FACE_INTERP_RES = 0.1
 
-with open("./oaemapi/VERSION", "r") as f:
+with open("./oaemapi/version", "r") as f:
     VERSION = f.read().strip()
