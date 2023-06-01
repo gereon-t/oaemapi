@@ -81,7 +81,7 @@ async def plot(
                 "yanchor": "top",
                 "font": {
                     "family": "Arial",
-                    "size": 24,
+                    "size": 40,
                     "color": "black",
                 },
             },
@@ -91,6 +91,7 @@ async def plot(
             ),
             width=width,
             height=height,
+            font=dict(size=30),
         ),
     )
     fig_json = fig.to_json()
