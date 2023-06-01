@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from pointset import PointSet
 
-from oaemapi.config import GEOID_FILE, HOST, LOG_LEVEL, PORT
+from oaemapi.config import GEOID_FILE, HOST, LOG_FILE, LOG_LEVEL, PORT, VERSION
 from oaemapi.core.oaem import Oaem, oaem_from_pointset
 from oaemapi.geoid import Geoid, Interpolator
 
@@ -15,6 +15,7 @@ logging.basicConfig(
     format="%(levelname)-8s %(asctime)s.%(msecs)03d - %(message)s",
     level=LOG_LEVEL,
     datefmt="%Y-%m-%d %H:%M:%S",
+    filename=LOG_FILE,
 )
 
 app = FastAPI()
@@ -73,7 +74,7 @@ async def plot(
         ),
         layout=go.Layout(
             title={
-                "text": "Obstruction Adaptive Elevation Mask",
+                "text": f"Obstruction Adaptive Elevation Mask API {VERSION}",
                 "x": 0.5,
                 "y": 1,
                 "xanchor": "center",

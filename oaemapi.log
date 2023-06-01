@@ -1,0 +1,26 @@
+INFO     2023-06-01 23:10:02.201 - Initialized geoid from: ./oaemapi/geoid/data.txt, Number of grid points: 77782
+INFO     2023-06-01 23:10:07.865 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:08.781 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:08.809 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:08.832 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:08.856 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:08.912 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:08.985 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:09.038 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:09.080 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:09.137 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:09.171 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:09.205 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:09.230 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:09.282 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:09.340 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:09.362 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:09.381 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:09.403 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:09.423 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:09.443 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:09.465 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:09.491 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:09.518 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:09.551 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-01 23:10:09.576 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg

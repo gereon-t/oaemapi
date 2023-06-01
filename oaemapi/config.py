@@ -16,8 +16,12 @@ WFS_BASE_REQUEST = "Service=WFS&REQUEST=GetFeature&VERSION=1.1.0&TYPENAME=bldg:B
 HOST = "0.0.0.0"
 PORT = 8000
 LOG_LEVEL = logging.INFO
+LOG_FILE = "./oaemapi.log"
 
 OAEM_PARAM = 1.5
 GRID_RES = 1e-4
 WIN_SIZE = 3
 FACE_INTERP_RES = 0.1
+
+with open("./oaemapi/VERSION", "r") as f:
+    VERSION = f.read().strip()
