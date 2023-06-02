@@ -70,7 +70,13 @@ async def plot(
             },
             polar=dict(
                 angularaxis=dict(direction="clockwise", rotation=90 + heading),
-                radialaxis=dict(angle=90),
+                radialaxis=dict(
+                    angle=90,
+                    tickmode="array",
+                    tickvals=[0, 15, 30, 45, 60, 75, 90],
+                    ticktext=["90", "75", "60", "45", "30", "15", "0"],
+                    tickangle=90,
+                ),
             ),
             width=width,
             height=height,
