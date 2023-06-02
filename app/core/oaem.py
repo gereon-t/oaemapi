@@ -1,16 +1,12 @@
-import logging
 from functools import lru_cache
 from typing import Callable, Tuple
 
 import numpy as np
 from pointset import PointSet
-
-from app.config import GRID_RES, OAEM_PARAM, WIN_SIZE
-from app.core.neighborhood import Neighborhood
 from scipy.spatial import ConvexHull
 
-# logger configuration
-logger = logging.getLogger("root")
+from app.config import GRID_RES, OAEM_PARAM, WIN_SIZE, logger
+from app.core.neighborhood import Neighborhood
 
 
 @lru_cache(maxsize=4096)

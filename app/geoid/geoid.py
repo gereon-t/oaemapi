@@ -1,4 +1,3 @@
-import logging
 from enum import Enum
 from functools import lru_cache
 
@@ -6,10 +5,7 @@ from pandas import read_csv
 from pointset import PointSet
 from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
 
-from app.config import GEOID_EPSG, GEOID_INTERP_EPSG, GEOID_RES
-
-# logger configuration
-logger = logging.getLogger("root")
+from app.config import GEOID_EPSG, GEOID_INTERP_EPSG, GEOID_RES, logger
 
 
 class InvalidInterpolatorError(Exception):

@@ -1,11 +1,9 @@
-import logging
 from functools import lru_cache
+
 import requests
 from pointset import PointSet
 
-from app.config import WFS_BASE_REQUEST, WFS_EPSG, WFS_URL
-
-logger = logging.getLogger("root")
+from app.config import WFS_BASE_REQUEST, WFS_EPSG, WFS_URL, logger
 
 
 @lru_cache(maxsize=256)

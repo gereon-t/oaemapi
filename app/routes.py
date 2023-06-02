@@ -1,4 +1,3 @@
-import logging
 from time import time
 
 import numpy as np
@@ -7,16 +6,18 @@ from fastapi import Request
 from pointset import PointSet
 
 from app import app, geoid, templates
-from app.config import VERSION
+from app.config import GEOID_RES, VERSION, POS_RES, logger
 from app.core.oaem import Oaem, oaem_from_pointset
-
-logger = logging.getLogger("root")
 
 
 def oaem_ellipsoidal_height(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> Oaem:
     pos = PointSet(xyz=np.array([pos_x, pos_y, pos_z]), epsg=epsg, init_local_transformer=False)
-    pos.z -= geoid.interpolate(pos=pos)
-    return oaem_from_pointset(pos=pos)
+    pos.z -= geoid.interpolate(pos=pos.round_to(GEOID_RES))
+    oaem = oaem_from_pointset(pos=pos.round_to(POS_RES))
+
+    logger.debug(f"Geoid cache info: {geoid.interpolate.cache_info()}")
+    logger.debug(f"Position cache info: {oaem_from_pointset.cache_info()}")
+    return oaem
 
 
 @app.get("/")
@@ -26,12 +27,11 @@ async def index(request: Request):
 
 @app.get("/api")
 async def oaem_request(pos_x: float, pos_y: float, pos_z: float, epsg: int):
-    logger.debug("Received OAEM request")
+    logger.info(f"Received API request for position [{pos_x:.3f}, {pos_y:.3f}, {pos_z:.3f}], EPSG: {epsg}")
     query_time = time()
 
     oaem = oaem_ellipsoidal_height(pos_x, pos_y, pos_z, epsg)
     oaem_str = str(oaem.az_el_str)
-    logger.debug(f"Cache info: {oaem_from_pointset.cache_info()}")
 
     response_time = time()
     logger.debug(

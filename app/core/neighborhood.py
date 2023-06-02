@@ -1,13 +1,8 @@
-import logging
 import numpy as np
 from pointset import PointSet
-from app.config import N_MAX_DIST, N_RANGE, N_RES, WFS_EPSG
-
+from app.config import N_RES, N_RANGE, N_RES, WFS_EPSG, logger
 from app.wfs.request import request_wfs_lod1
 from app.wfs.response import parse_response
-
-# logger configuration
-logger = logging.getLogger("root")
 
 
 class Neighborhood:
@@ -17,14 +12,14 @@ class Neighborhood:
 
     def __init__(self, pos: PointSet, nrange: float = N_RANGE) -> None:
         self.pos = pos.to_epsg(WFS_EPSG, inplace=False)
-        self.neighborhood_pos = pos.round_to(N_MAX_DIST)
-        self.oaem_pos = pos.round_to(N_RES)
         self.nrange = nrange
+        self.neighborhood_pos = pos.round_to(N_RES)
 
         self.buildings = self.request_buildings()
 
     def request_buildings(self) -> list:
         response = request_wfs_lod1(pos=self.neighborhood_pos, nrange=self.nrange)
+        logger.debug(f"Neighborhood cache info: {request_wfs_lod1.cache_info()}")
         return parse_response(response)
 
     def all_boundaries(self, key: str = "boundary") -> np.ndarray:
@@ -42,7 +37,7 @@ class Neighborhood:
         return np.array([])
 
     def __key(self):
-        return self.oaem_pos
+        return self.neighborhood_pos
 
     def __hash__(self):
         return hash(self.__key())

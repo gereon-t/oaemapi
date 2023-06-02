@@ -1,14 +1,7 @@
-import logging
-
 import numpy as np
 import xmltodict
 from requests import Response
-
-from app.config import FACE_INTERP_RES
-
-
-# logger configuration
-logger = logging.getLogger("root")
+from app.config import FACE_INTERP_RES, logger
 
 
 def lengths_from_xyz(xyz: np.ndarray) -> np.ndarray:
