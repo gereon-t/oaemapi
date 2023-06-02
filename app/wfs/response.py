@@ -4,7 +4,7 @@ import numpy as np
 import xmltodict
 from requests import Response
 
-from oaemapi.config import FACE_INTERP_RES
+from app.config import FACE_INTERP_RES
 
 
 # logger configuration

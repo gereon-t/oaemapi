@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name="oaemapi",
-    version=open("oaemapi/version", "r").read(),
+    version=open("app/version", "r").read(),
     description="Obstruction Adaptive Elevation Mask API (OAEM-API)",
     author="Gereon Tombrink",
     author_email="tombrink@igg.uni-bonn.de",
@@ -73,7 +73,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "oaemapi = oaemapi.__main__:main",
+            "oaemapi = app.__main__:main",
         ],
     },
 )

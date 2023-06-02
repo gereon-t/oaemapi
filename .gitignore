@@ -52,3 +52,5 @@ data
 *.egg-info
 trajeval/
 oaemapi.log
+build/
+.vscode/

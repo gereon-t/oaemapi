@@ -6,7 +6,7 @@ from pandas import read_csv
 from pointset import PointSet
 from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
 
-from oaemapi.config import GEOID_EPSG, GEOID_INTERP_EPSG, GEOID_RES
+from app.config import GEOID_EPSG, GEOID_INTERP_EPSG, GEOID_RES
 
 # logger configuration
 logger = logging.getLogger("root")

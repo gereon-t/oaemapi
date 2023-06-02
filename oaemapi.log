@@ -21,3 +21,18 @@ INFO     2023-06-01 23:28:02.481 - Received plot request for position [50.734, 7
 INFO     2023-06-01 23:28:03.483 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
 INFO     2023-06-01 23:28:04.485 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
 INFO     2023-06-01 23:28:05.487 - Received plot request for position [50.734, 7.083, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-02 09:04:37.236 - Initialized geoid from: ./app/geoid/data.txt, Number of grid points: 77782
+INFO     2023-06-02 09:04:37.326 - Initialized geoid from: ./app/geoid/data.txt, Number of grid points: 77782
+INFO     2023-06-02 09:04:45.553 - Initialized geoid from: ./app/geoid/data.txt, Number of grid points: 77782
+INFO     2023-06-02 09:05:40.733 - Initialized geoid from: ./app/geoid/data.txt, Number of grid points: 77782
+INFO     2023-06-02 09:05:45.481 - Received plot request for position [50.721, 7.090, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-02 09:05:50.389 - Received plot request for position [50.721, 7.090, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-02 09:05:50.401 - Received plot request for position [50.721, 7.090, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-02 09:05:50.410 - Received plot request for position [50.721, 7.090, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-02 09:05:50.420 - Received plot request for position [50.721, 7.090, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-02 09:05:50.431 - Received plot request for position [50.721, 7.090, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-02 09:05:55.387 - Received plot request for position [50.721, 7.090, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-02 09:05:55.400 - Received plot request for position [50.721, 7.090, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-02 09:05:55.408 - Received plot request for position [50.721, 7.090, 0.000], EPSG: 4326, heading: 0.000 deg
+INFO     2023-06-02 09:05:55.417 - Received plot request for position [50.721, 7.090, 0.000], EPSG: 4326, heading: 0.000 deg
+WARNING  2023-06-02 09:07:55.411 - No buildings within specified range!

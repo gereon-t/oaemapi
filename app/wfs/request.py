@@ -3,9 +3,8 @@ from functools import lru_cache
 import requests
 from pointset import PointSet
 
-from oaemapi.config import WFS_BASE_REQUEST, WFS_EPSG, WFS_URL
+from app.config import WFS_BASE_REQUEST, WFS_EPSG, WFS_URL
 
-# logger configuration
 logger = logging.getLogger("root")
 
 

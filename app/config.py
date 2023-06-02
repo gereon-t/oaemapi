@@ -4,7 +4,7 @@ N_RANGE = 50
 N_RES = 0.05
 N_MAX_DIST = 50
 
-GEOID_FILE = "./oaemapi/geoid/data.txt"
+GEOID_FILE = "./app/geoid/data.txt"
 GEOID_EPSG = 4258
 GEOID_INTERP_EPSG = 25832
 GEOID_RES = 20
@@ -23,5 +23,5 @@ GRID_RES = 1e-4
 WIN_SIZE = 3
 FACE_INTERP_RES = 0.1
 
-with open("./oaemapi/version", "r") as f:
+with open("./app/version", "r") as f:
     VERSION = f.read().strip()

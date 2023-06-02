@@ -1,10 +1,10 @@
 import logging
 import numpy as np
 from pointset import PointSet
-from oaemapi.config import N_MAX_DIST, N_RANGE, N_RES, WFS_EPSG
+from app.config import N_MAX_DIST, N_RANGE, N_RES, WFS_EPSG
 
-from oaemapi.wfs.request import request_wfs_lod1
-from oaemapi.wfs.response import parse_response
+from app.wfs.request import request_wfs_lod1
+from app.wfs.response import parse_response
 
 # logger configuration
 logger = logging.getLogger("root")
