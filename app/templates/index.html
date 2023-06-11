@@ -61,7 +61,9 @@
             }
 
             if (heading === null) {
-                heading = 0;
+                heading = 0.0.toFixed(1)
+            } else {
+                heading = heading.toFixed(1)
             }
 
             document.getElementById('position').innerText = `Current Position: ${latitude}°, ${longitude}°, ${height} m`;
@@ -73,7 +75,6 @@
                 dataType: "json",
                 success: function (response) {
                     var within_area = JSON.parse(response.within_area);
-                    console.log(within_area);
                     if (within_area === false) {
                         document.getElementById('position').style.color = 'red';
                         document.getElementById('position').innerText = `Current Position: ${latitude}°, ${longitude}°, ${height} m\n is outside of the coverage area.`;
