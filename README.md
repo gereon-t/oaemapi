@@ -5,6 +5,8 @@ An OAEM can be useful in various scenarios including GNSS Signal filtering:
 
 ![](images/oaem.gif)
 
+The code is to be seen as a proof-of-concept. It is designed for the LOD1 building model web feature service of Geobasis NRW, Germany. In its current state, it is therefore only usefully applicable within North Rhine-Westphalia. Unfortunately, very few federal states provide building models free of charge, which limits the applicability of the software.
+
 ## Installation
 
 ```bash
