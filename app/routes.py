@@ -6,12 +6,16 @@ import plotly.graph_objects as go
 from fastapi import Request, APIRouter
 
 from fastapi.templating import Jinja2Templates
-from app.config import VERSION, logger
+from fastapi.responses import FileResponse
+from app.config import FAVICON_PATH, VERSION, logger
 from app.core.oaem import Oaem, compute_oaem
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
+@router.get('/favicon.ico', include_in_schema=False)
+async def favicon():
+    return FileResponse(FAVICON_PATH)
 
 @router.get("/", include_in_schema=False)
 async def index(request: Request):

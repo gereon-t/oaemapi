@@ -6,6 +6,8 @@ OAEM_RES = np.deg2rad(1)
 N_RANGE = 150
 N_RES = 50
 
+FAVICON_PATH = "./app/data/favicon.ico"
+
 AREA_SHAPEFILE = "./app/data/area.shp"
 
 GEOID_FILE = "./app/data/geoid.txt"
