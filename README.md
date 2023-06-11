@@ -1,11 +1,11 @@
 # Obstruction Adaptive Elevation Mask API
-An Obstruction Adaptive Elevation Mask (OAEM) describes the obstruction of the sky view, e.g. due to buildings, using azimuth and elevation pairs. The term Obstruction Adaptive Elevation Mask was first used by [Zimmermann 2019](https://www.researchgate.net/publication/329833465_GPS-Multipath_Analysis_using_Fresnel-Zones).
+This software computes an Obstruction Adaptive Elevation Mask (OAEM) for a given position using CityGML models. An OAEM describes the obstruction of the sky view, e.g. due to buildings, using azimuth and elevation pairs. The term Obstruction Adaptive Elevation Mask was first used by [Zimmermann 2019](https://www.researchgate.net/publication/329833465_GPS-Multipath_Analysis_using_Fresnel-Zones). The CityGML models are retrieved from a Web Feature Service (WFS).
 
 An OAEM can be useful in various scenarios including GNSS Signal filtering:
 
 ![](images/oaem.gif)
 
-The code is to be seen as a proof-of-concept. It is designed for the LOD1 building model web feature service of Geobasis NRW, Germany. In its current state, it is therefore only usefully applicable within North Rhine-Westphalia. Unfortunately, very few federal states provide building models free of charge, which limits the applicability of the software.
+The code is designed for the LOD1 building model Web Feature Service of Geobasis NRW, Germany. In its current state, it is therefore only usefully applicable within North Rhine-Westphalia, Germany.
 
 ## Installation
 
