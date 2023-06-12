@@ -57,18 +57,10 @@ import numpy as np
 
 OAEM_RES = np.deg2rad(1)
 
-APP_HOST = "0.0.0.0"
-APP_PORT = 8000
-logging.basicConfig(
-    format="%(levelname)-8s %(asctime)s.%(msecs)03d - %(message)s",
-    level=logging.INFO,
-    datefmt="%Y-%m-%d %H:%M:%S",
-    filename="./oaemapi.log",
-)
-logger = logging.getLogger("root")
+N_RANGE = 80
+N_RES = 40
 
-N_RANGE = 150
-N_RES = 50
+FAVICON_PATH = "./app/data/favicon.ico"
 
 AREA_SHAPEFILE = "./app/data/area.shp"
 
@@ -80,7 +72,15 @@ WFS_EPSG = 25832
 WFS_URL = "https://www.wfs.nrw.de/geobasis/wfs_nw_3d-gebaeudemodell_lod1"
 WFS_BASE_REQUEST = "Service=WFS&REQUEST=GetFeature&VERSION=1.1.0&TYPENAME=bldg:Building"
 
-
+APP_HOST = "0.0.0.0"
+APP_PORT = 8000
+logging.basicConfig(
+    format="%(levelname)-8s %(asctime)s.%(msecs)03d - %(message)s",
+    level=logging.INFO,
+    datefmt="%Y-%m-%d %H:%M:%S",
+    filename="./oaemapi.log",
+)
+logger = logging.getLogger("root")
 
 with open("./app/version", "r") as f:
     VERSION = f.read().strip()
@@ -90,6 +90,7 @@ with open("./app/version", "r") as f:
 * `OAEM_RES`: Resolution of the azimuth grid of the OAEM in radians.
 * `APP_HOST`: Host of the server.
 * `APP_PORT`: Port of the server.
+* `FAVICON_PATH`: Path to the favicon
 * `N_RANGE`: Neighbourhood range in meters centered around the requested position
 * `N_RES`: Before requesting a new neighborhood, the requested position is rounded to multiples of N_RES. This is done to avoid requesting the same neighborhood multiple times if the position has only slightly changed.
 * `AREA_SHAPEFILE`: Path to the shapefile defining the area of operation. The area is mainly limited by the availability of (free) CityGML data. In this case, it is limited to Northrhine-Westphalia

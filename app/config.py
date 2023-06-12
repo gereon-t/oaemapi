@@ -3,8 +3,8 @@ import numpy as np
 
 OAEM_RES = np.deg2rad(1)
 
-N_RANGE = 150
-N_RES = 50
+N_RANGE = 80
+N_RES = 40
 
 FAVICON_PATH = "./app/data/favicon.ico"
 
