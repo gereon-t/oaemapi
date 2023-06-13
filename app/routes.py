@@ -13,15 +13,15 @@ from app.core.oaem import Oaem, compute_oaem
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
-@router.get('/favicon.ico', include_in_schema=False)
+
+@router.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     return FileResponse(FAVICON_PATH)
 
+
 @router.get("/", include_in_schema=False)
 async def index(request: Request):
-    return templates.TemplateResponse(
-        "index.html", {"request": request, "version": VERSION}
-    )
+    return templates.TemplateResponse("index.html", {"request": request, "version": VERSION})
 
 
 @router.get("/privacy_policy", include_in_schema=False)
@@ -56,9 +56,7 @@ async def oaem_request(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> d
                           Azimuth and elevation are given in radians.
             - within_area (bool): A boolean indicating whether the provided position is within the area of operation.
     """
-    logger.info(
-        f"Received API request for position [{pos_x:.3f}, {pos_y:.3f}, {pos_z:.3f}], EPSG: {epsg}"
-    )
+    logger.info(f"Received API request for position [{pos_x:.3f}, {pos_y:.3f}, {pos_z:.3f}], EPSG: {epsg}")
 
     query_time = time()
     oaem, within_area = compute_oaem(pos_x=pos_x, pos_y=pos_y, pos_z=pos_z, epsg=epsg)
@@ -112,9 +110,7 @@ async def plot(
     return {"data": fig_json, "within_area": within_area}
 
 
-def create_json_fig(
-    width: int, height: int, heading: float, oaem: Oaem
-) -> str | None | Any:
+def create_json_fig(width: int, height: int, heading: float, oaem: Oaem) -> str | None | Any:
     """
     Creates a Plotly scatterpolar figure of the Obstruction Adaptive Elevation Mask (OAEM) for a given position and EPSG code.
 

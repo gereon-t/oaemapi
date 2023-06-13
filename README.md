@@ -29,8 +29,29 @@ uvicorn main:app --host 0.0.0.0
 
 ### Endpoints
 Once the server is running, you can see the documentation using http://127.0.0.1:8000/docs.
-#### /api
-The /api endpoint is used to request the obstruction adaptive elevation mask. It returns a JSON object containing the obstruction adaptive elevation mask in "azimuth:elevation, ..."-format.
+#### **/api**
+The /api endpoint is used to request the obstruction adaptive elevation mask (OAEM). The OAEM represents the obstruction of the sky view due to
+buildings using elevation angles. The endpoint returns a JSON object containing the OAEM in "azimuth:elevation, ..."-format. It is given with an azimuth resolution of 1 degree.
+
+**Note:** The OAEM data provided by this API is currently available only for the state of North Rhine-Westphalia (NRW), Germany.
+If the provided position is outside the area of operation, an empty OAEM is returned.
+
+**Args:**
+
+- `pos_x` (float): The x-coordinate of the position.
+- `pos_y` (float): The y-coordinate of the position.
+- `pos_z` (float): The z-coordinate of the position.
+- `epsg` (int): The EPSG code specifying the coordinate reference system (CRS) of the provided position.
+
+**Returns:**
+
+A JSON object with:
+
+- `data` (str): The OAEM data represented as a string in azimuth:elevation format.
+  If the position is outside the area of operation, the OAEM will be empty.
+  Azimuth and elevation are given in radians.
+- `within_area` (bool): A boolean indicating whether the provided position is within the area of operation.
+
 
 Example:
 ```bash
@@ -41,10 +62,26 @@ Returns
 {"data":"0.009:0.164,0.017:0.163,...,6.274:0.168,6.283:0.166,", within_area":true}
 ```
 
-#### /plot
-The /plot endpoint returns a Plotly (https://plotly.com/) plot of the obstruction adaptive elevation mask in JSON format.
+#### **/plot**
+Computes the Obstruction Adaptive Elevation Mask (OAEM) for a given position and EPSG code, and returns a plot of the OAEM.
 
-#### /
+**Note:** The OAEM data provided by this API is currently available only for the state of North Rhine-Westphalia (NRW), Germany.
+
+**Args:**
+
+- `pos_x` (float): The x-coordinate of the position.
+- `pos_y` (float): The y-coordinate of the position.
+- `pos_z` (float): The z-coordinate of the position.
+- `epsg` (int): The EPSG code of the position.
+- `width` (int, optional): The width of the plot in pixels. Defaults to 600.
+- `height` (int, optional): The height of the plot in pixels. Defaults to 600.
+- `heading` (float, optional): The heading of the plot in degrees. Defaults to 0.0.
+
+**Returns:**
+
+A JSON string representation of the Plotly figure.
+
+#### **/**
 The / endpoint returns a simple HTML page with a Plotly plot of the obstruction adaptive elevation mask. The position is requested from the browser using the Geolocation API (https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API).
 
 ## Configuration
