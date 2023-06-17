@@ -12,6 +12,11 @@ class InvalidInterpolatorError(Exception):
     """"""
 
 
+class ZeroInterpolator:
+    def __call__(*args) -> float:
+        return 0.0
+
+
 class Interpolator(Enum):
     NEAREST = 0
     LINEAR = 1
@@ -43,6 +48,11 @@ class Geoid:
         Raises:
             InvalidInterpolatorError: If an invalid interpolator type is provided.
         """
+        if not filename:
+            self.__interp = ZeroInterpolator()
+            logger.info("No geoid file provided, no undulation will be applied!")
+            return
+
         # read csv
         data = read_csv(filename, header=None, delim_whitespace=True)
         data = data.to_numpy()
@@ -58,9 +68,7 @@ class Geoid:
         else:
             raise InvalidInterpolatorError()
 
-        logger.info(
-            f"Initialized geoid from: {filename}, Number of grid points: {len(data)}"
-        )
+        logger.info(f"Initialized geoid from: {filename}, Number of grid points: {len(data)}")
 
     @lru_cache(maxsize=2048)
     def interpolate(self, pos: PointSet) -> np.ndarray:

@@ -132,8 +132,8 @@ with open("./app/version", "r") as f:
 * `FAVICON_PATH`: Path to the favicon
 * `N_RANGE`: Neighbourhood range in meters centered around the requested position
 * `N_RES`: Before requesting a new neighborhood, the requested position is rounded to multiples of N_RES. This is done to avoid requesting the same neighborhood multiple times if the position has only slightly changed.
-* `AREA_SHAPEFILE`: Path to the shapefile defining the area of operation. The area is mainly limited by the availability of (free) CityGML data. In this case, it is limited to Northrhine-Westphalia
-* `GEOID_FILE`: Path to the geoid file. The geoid file is a text file containing positions and their geoid height in the format "lat lon height". The geoid file is used to convert ellipsoidal heights to orthometric heights.
+* `AREA_SHAPEFILE`: Path to the shapefile defining the area of operation. The area is mainly limited by the availability of (free) CityGML data. In this case, it is limited to Northrhine-Westphalia. If you do not have such a shapefile, set this to an empty string.
+* `GEOID_FILE`: Path to the geoid file. The geoid file is a text file containing positions and their geoid height in the format "lat lon height". The geoid file is used to convert ellipsoidal heights to orthometric heights. If you do not have or need undulations, you can set this to an empty string.
 * `GEOID_EPSG`: EPSG code of the positions in the geoid file.
 * `GEOID_RES`: Before interpolating the geoid file, the positions are rounded to multiples of GEOID_RES. This is done to avoid interpolating the same position multiple times if the position has only slightly changed.
 * `WFS_EPSG`: EPSG code of the positions used for requesting the Web Feature Service (WFS). The resulting corner points of the CityGML LOD1 buildings will also be given in this EPSG. Therefore, all positional handling will be done in the WFS_EPSG. Due to the OAEM computation algorithm, this EPSG code must refer to a metric projected coordinate system such as UTM.
