@@ -21,7 +21,7 @@ cd oaemapi
 pip install -e .
 ```
 
-Depending on the Web Feature Service height definition you may need geoid undulations. For NRW, Germany you can download them for free at https://gdz.bkg.bund.de/index.php/default/quasigeoid-der-bundesrepublik-deutschland-quasigeoid.html.
+Depending on the Web Feature Service height definition you may need geoid undulations. For Germany you can download them for free at https://gdz.bkg.bund.de/index.php/default/quasigeoid-der-bundesrepublik-deutschland-quasigeoid.html.
 
 ## Usage
 Run the server with
