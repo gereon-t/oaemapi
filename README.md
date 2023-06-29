@@ -30,7 +30,6 @@ uvicorn main:app --host 0.0.0.0
 ```
 
 ### Endpoints
-Once the server is running, you can see the documentation using http://127.0.0.1:8000/docs.
 #### **/api**
 The /api endpoint is used to request the obstruction adaptive elevation mask (OAEM). The OAEM represents the obstruction of the sky view due to
 buildings using elevation angles. The endpoint returns a JSON object containing the OAEM in "azimuth:elevation, ..."-format. It is given with an azimuth resolution of 1 degree.
