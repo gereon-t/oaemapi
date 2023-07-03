@@ -45,6 +45,7 @@ setup(
         "pandas>=2.0.2",
         "plotly>=5.15.0",
         "pointset>=0.1.5",
+        "pvlib>=0.10.0",
         "pydantic>=1.10.9",
         "pyproj>=3.5.0",
         "python-dateutil>=2.8.2",

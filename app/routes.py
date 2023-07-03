@@ -1,4 +1,3 @@
-from datetime import timedelta
 from time import time
 from typing import Any
 
@@ -10,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse
 from app.config import FAVICON_PATH, VERSION, logger
 from app.core.oaem import Oaem, compute_oaem
-from app.core.sunspan import SunSpan
+from app.core.sunspan import SunSpan, compute_sunspan
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -23,7 +22,9 @@ async def favicon():
 
 @router.get("/", include_in_schema=False)
 async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "version": VERSION})
+    return templates.TemplateResponse(
+        "index.html", {"request": request, "version": VERSION}
+    )
 
 
 @router.get("/privacy_policy", include_in_schema=False)
@@ -58,7 +59,9 @@ async def oaem_request(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> d
                           Azimuth and elevation are given in radians.
             - within_area (bool): A boolean indicating whether the provided position is within the area of operation.
     """
-    logger.info(f"Received API request for position [{pos_x:.3f}, {pos_y:.3f}, {pos_z:.3f}], EPSG: {epsg}")
+    logger.info(
+        f"Received API request for position [{pos_x:.3f}, {pos_y:.3f}, {pos_z:.3f}], EPSG: {epsg}"
+    )
 
     query_time = time()
     oaem, within_area = compute_oaem(pos_x=pos_x, pos_y=pos_y, pos_z=pos_z, epsg=epsg)
@@ -74,17 +77,24 @@ async def oaem_request(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> d
     return {"data": oaem_str, "within_area": within_area}
 
 
-@router.get("/sunspan")
-async def sunspan(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> dict:
+@router.get("/sunvis")
+async def sunvis(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> dict:
+    query_time = time()
     oaem, within_area = compute_oaem(pos_x=pos_x, pos_y=pos_y, pos_z=pos_z, epsg=epsg)
-    sunspan = SunSpan.from_position(pos=oaem.pos, sym_half_range=timedelta(hours=6))
-    sunspan.intersect_with_oaem(oaem=oaem)
+    sunspan = compute_sunspan(pos=oaem.pos)
+    sunspan.intersect_with_oaem(oaem)
+    response_time = time()
+
+    logger.info(
+        f"Computed sun visibility for position [{pos_x:.3f}, {pos_y:.3f}, {pos_z:.3f}], EPSG: {epsg} in {(response_time-query_time)*1000:.3f} ms"
+    )
+    logger.info(f"Sunspan cache info: {compute_sunspan.cache_info()}")
+    logger.info(f"Position cache info: {compute_oaem.cache_info()}")
+
     return {
-        "sun_start": sunspan.sun_start,
-        "sun_end": sunspan.sun_end,
-        "sun_time": sunspan.time,
-        "sun_azimuth": sunspan.azimuth,
-        "sun_elevation": sunspan.elevation,
+        "visible": str(sunspan.visible(query_time)),
+        "since": str(sunspan.since(query_time)),
+        "until": str(sunspan.until(query_time)),
         "within_area": within_area,
     }
 
@@ -119,15 +129,28 @@ async def plot(
 
         A JSON string representation of the Plotly figure.
     """
+    query_time = time()
     oaem, within_area = compute_oaem(pos_x=pos_x, pos_y=pos_y, pos_z=pos_z, epsg=epsg)
+    sunspan = compute_sunspan(pos=oaem.pos)
+    sunspan.intersect_with_oaem(oaem)
 
     logger.info(f"Position cache info: {compute_oaem.cache_info()}")
-    fig_json = create_json_fig(width, height, heading, oaem)
+    logger.info(f"Sunspan cache info: {compute_sunspan.cache_info()}")
+    fig_json = create_json_fig(width, height, heading, oaem, sunspan)
 
-    return {"data": fig_json, "within_area": within_area}
+    return {
+        "data": fig_json,
+        "within_area": within_area,
+        "visible": str(sunspan.visible(query_time)),
+        "since": str(sunspan.since(query_time)),
+        "until": str(sunspan.until(query_time)),
+        "within_area": within_area,
+    }
 
 
-def create_json_fig(width: int, height: int, heading: float, oaem: Oaem) -> str | None | Any:
+def create_json_fig(
+    width: int, height: int, heading: float, oaem: Oaem, sunspan: SunSpan
+) -> str | None | Any:
     """
     Creates a Plotly scatterpolar figure of the Obstruction Adaptive Elevation Mask (OAEM) for a given position and EPSG code.
 
@@ -140,28 +163,52 @@ def create_json_fig(width: int, height: int, heading: float, oaem: Oaem) -> str 
     Returns:
         str: A JSON string representation of the Plotly figure.
     """
-    fig = go.Figure(
-        data=go.Scatterpolar(
+    query_time = time()
+    fig = go.Figure()
+
+    fig.add_trace(
+        trace=go.Scatterpolar(
             theta=np.rad2deg(oaem.azimuth),
             r=np.rad2deg(np.pi / 2 - oaem.elevation),
             fill="toself",
             fillcolor="#c9eaf8",
-            text="Obstruction Adaptive Elevation Mask",
+            name="Obstruction Adaptive Elevation Mask",
         ),
-        layout=go.Layout(
-            polar=dict(
-                angularaxis=dict(direction="clockwise", rotation=90 + heading),
-                radialaxis=dict(
-                    angle=90,
-                    tickmode="array",
-                    tickvals=[0, 15, 30, 45, 60, 75],
-                    ticktext=["90°", "75°", "60°", "45°", "30°", "15°"],
-                    tickangle=90,
-                ),
+    )
+
+    fig.add_trace(
+        trace=go.Scatterpolar(
+            theta=np.rad2deg(sunspan.azimuth),
+            r=np.rad2deg(np.pi / 2 - sunspan.elevation),
+            name="Sun Trajectory",
+            line_color="black",
+        ),
+    )
+
+    # add a single point for the current sun position
+    fig.add_trace(
+        trace=go.Scatterpolar(
+            theta=[np.rad2deg(sunspan.query_azimuth(query_time))],
+            r=[np.rad2deg(np.pi / 2 - sunspan.query_elevation(query_time))],
+            name="Sun Position",
+            mode="markers",
+            marker=dict(size=40, color = "gold"),
+        ),
+    )
+    fig.update_layout(
+        polar=dict(
+            angularaxis=dict(direction="clockwise", rotation=90 + heading),
+            radialaxis=dict(
+                angle=90,
+                tickmode="array",
+                tickvals=[0, 15, 30, 45, 60, 75],
+                ticktext=["90°", "75°", "60°", "45°", "30°", "15°"],
+                tickangle=90,
             ),
-            width=width,
-            height=height,
-            font=dict(size=30),
         ),
+        width=width,
+        height=height,
+        font=dict(size=30),
+        showlegend=False,
     )
     return fig.to_json()
