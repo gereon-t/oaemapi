@@ -1,3 +1,4 @@
+from datetime import timedelta
 from time import time
 from typing import Any
 
@@ -9,6 +10,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse
 from app.config import FAVICON_PATH, VERSION, logger
 from app.core.oaem import Oaem, compute_oaem
+from app.core.sunspan import SunSpan
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -72,6 +74,21 @@ async def oaem_request(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> d
     return {"data": oaem_str, "within_area": within_area}
 
 
+@router.get("/sunspan")
+async def sunspan(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> dict:
+    oaem, within_area = compute_oaem(pos_x=pos_x, pos_y=pos_y, pos_z=pos_z, epsg=epsg)
+    sunspan = SunSpan.from_position(pos=oaem.pos, sym_half_range=timedelta(hours=6))
+    sunspan.intersect_with_oaem(oaem=oaem)
+    return {
+        "sun_start": sunspan.sun_start,
+        "sun_end": sunspan.sun_end,
+        "sun_time": sunspan.time,
+        "sun_azimuth": sunspan.azimuth,
+        "sun_elevation": sunspan.elevation,
+        "within_area": within_area,
+    }
+
+
 @router.get("/plot")
 async def plot(
     pos_x: float,
@@ -127,7 +144,8 @@ def create_json_fig(width: int, height: int, heading: float, oaem: Oaem) -> str 
         data=go.Scatterpolar(
             theta=np.rad2deg(oaem.azimuth),
             r=np.rad2deg(np.pi / 2 - oaem.elevation),
-            mode="lines",
+            fill="toself",
+            fillcolor="#c9eaf8",
             text="Obstruction Adaptive Elevation Mask",
         ),
         layout=go.Layout(

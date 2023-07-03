@@ -27,7 +27,9 @@ def request_wfs_lod1(pos: PointSet, nrange: float = N_RANGE) -> list[Edge]:
         requests.RequestException: If the WFS request fails.
     """
     pos.to_epsg(WFS_EPSG)
-    logger.info(f"Position in WFS EPSG: [{pos.x:.3f}, {pos.y:.3f}, {pos.z:.3f}], EPSG: {WFS_EPSG}")
+    logger.info(
+        f"Position in WFS EPSG: [{pos.x:.3f}, {pos.y:.3f}, {pos.z:.3f}], EPSG: {WFS_EPSG}"
+    )
     request_url = create_request(pos=pos, nrange=nrange)
     logger.debug(f"Sending request {request_url}")
     response = requests.get(request_url)
@@ -86,14 +88,19 @@ def parse_response(response: requests.Response) -> list[Edge]:
         # single lod1Solid
         if lod1solid := bldg.get("bldg:lod1Solid", {}):
             if (face := parse_lod1solid(lod1solid)) is not None:
-                edge_list.extend(Edge(start=face[i], end=face[i + 1]) for i in range(len(face) - 1))
+                edge_list.extend(
+                    Edge(start=face[i], end=face[i + 1]) for i in range(len(face) - 1)
+                )
 
         # multiple lod1Solids
         if bldg_parts := bldg.get("bldg:consistsOfBuildingPart", {}):
             for bpart in bldg_parts:
                 lod1solid = bpart.get("bldg:BuildingPart", {}).get("bldg:lod1Solid", {})
                 if (face := parse_lod1solid(lod1solid)) is not None:
-                    edge_list.extend(Edge(start=face[i], end=face[i + 1]) for i in range(len(face) - 1))
+                    edge_list.extend(
+                        Edge(start=face[i], end=face[i + 1])
+                        for i in range(len(face) - 1)
+                    )
 
     logger.debug("parsing response ... done")
     return edge_list
@@ -122,7 +129,9 @@ def parse_lod1solid(lod1solid: dict) -> np.ndarray | None:
         return None
 
     roof = surface_members[0]
-    linear_ring_str: str = roof["gml:Polygon"]["gml:exterior"]["gml:LinearRing"]["gml:posList"]
+    linear_ring_str: str = roof["gml:Polygon"]["gml:exterior"]["gml:LinearRing"][
+        "gml:posList"
+    ]
     linear_ring_arr = np.array(linear_ring_str.split(" "), dtype=float)
 
     return np.c_[linear_ring_arr[::3], linear_ring_arr[1::3], linear_ring_arr[2::3]]

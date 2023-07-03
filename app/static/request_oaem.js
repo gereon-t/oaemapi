@@ -2,7 +2,7 @@ function request_oaem(position) {
     const latitude = position.coords.latitude.toFixed(6);
     const longitude = position.coords.longitude.toFixed(6);
     let height = position.coords.altitude;
-    let heading = position.coords.heading;
+    let { heading } = position.coords;
 
     const winwidth = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth) - 20;
     const winheight = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight) - 20;
@@ -26,7 +26,7 @@ function request_oaem(position) {
         type: "GET",
         dataType: "json",
         success: function (response) {
-            var within_area = JSON.parse(response.within_area);
+            let within_area = JSON.parse(response.within_area);
             if (within_area === false) {
                 document.getElementById('position').style.color = 'red';
                 document.getElementById('position').innerText = `Current Position: ${latitude}°, ${longitude}°, ${height} m\n is outside of the coverage area.`;
@@ -34,7 +34,7 @@ function request_oaem(position) {
                 document.getElementById('position').style.color = 'black';
             }
 
-            var fig = JSON.parse(response.data);
+            let fig = JSON.parse(response.data);
             Plotly.newPlot("plot", fig.data, fig.layout);
         },
     });

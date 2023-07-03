@@ -20,12 +20,17 @@ class Oaem:
     The OAEM is computed from a set of edges that define the building roof footprints.
     """
 
+    pos: PointSet
     azimuth: np.ndarray = field(default_factory=lambda: np.arange(0, 2 * np.pi, OAEM_RES))
     elevation: np.ndarray = field(default_factory=lambda: np.zeros_like(np.arange(0, 2 * np.pi, OAEM_RES)))
 
     @property
     def az_el_str(self) -> str:
         return "".join(f"{az:.3f}:{el:.3f}," for az, el in zip(self.azimuth, self.elevation))
+
+    def interpolate(self, azimuths: list[float] or np.ndarray) -> "Oaem":
+        interp_elevation = np.interp(azimuths, self.azimuth, self.elevation)
+        return Oaem(pos=self.pos.copy(), azimuth=azimuths, elevation=interp_elevation)
 
 
 @lru_cache(maxsize=16384)
@@ -55,24 +60,24 @@ def compute_oaem(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> tuple[O
 
     edge_list = request_wfs_lod1(pos=pos.round_to(N_RES))
     logger.info(f"Neighborhood cache info: {request_wfs_lod1.cache_info()}")
-    return oaem_from_edge_list(edge_list=edge_list, pos_xyz=pos.xyz.ravel()), True
+    return oaem_from_edge_list(edge_list=edge_list, pos=pos), True
 
 
-def oaem_from_edge_list(edge_list: list[Edge], pos_xyz: np.ndarray) -> Oaem:
+def oaem_from_edge_list(edge_list: list[Edge], pos: PointSet) -> Oaem:
     """
     Computes an Obstruction Adaptive Elevation Model (OAEM) for a given position in space from a list of edges that define
     the building roof footprints.
 
     Args:
         edge_list (list[Edge]): A list of edges that define the building roof footprints.
-        pos_xyz (np.ndarray): The position in space as a numpy array of shape (3,) in the format (x, y, z).
+        pos (PointSet): The position in space.
 
     Returns:
         Oaem: An Obstruction Adaptive Elevation Model (OAEM) that stores the elevation data for the given position in space.
     """
     if not edge_list:
         return Oaem()
-    interval_tree = build_interval_tree(edge_list=edge_list, pos=pos_xyz)
+    interval_tree = build_interval_tree(edge_list=edge_list, pos=pos.xyz.ravel())
     oaem_grid = np.arange(-np.pi, np.pi, OAEM_RES)
     oaem_temp = np.zeros((len(oaem_grid) + 1, 2), dtype=np.float64)
 
@@ -87,7 +92,7 @@ def oaem_from_edge_list(edge_list: list[Edge], pos_xyz: np.ndarray) -> Oaem:
             ),
         )
     oaem_temp[-1, :] = oaem_temp[0, :]
-    return Oaem(azimuth=oaem_temp[:, 0], elevation=oaem_temp[:, 1])
+    return Oaem(pos=pos, azimuth=oaem_temp[:, 0], elevation=oaem_temp[:, 1])
 
 
 def build_interval_tree(edge_list: list[Edge], pos: np.ndarray) -> IntervalTree:

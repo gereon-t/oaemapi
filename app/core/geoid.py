@@ -68,7 +68,9 @@ class Geoid:
         else:
             raise InvalidInterpolatorError()
 
-        logger.info(f"Initialized geoid from: {filename}, Number of grid points: {len(data)}")
+        logger.info(
+            f"Initialized geoid from: {filename}, Number of grid points: {len(data)}"
+        )
 
     @lru_cache(maxsize=2048)
     def interpolate(self, pos: PointSet) -> np.ndarray:
