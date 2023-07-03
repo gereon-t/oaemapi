@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from functools import cached_property
 from app.core.oaem import Oaem
 import numpy as np
 import pandas as pd
@@ -8,23 +9,77 @@ from pvlib import solarposition
 
 
 @dataclass
-class SunSpan:
+class SunTrack:
     time: np.ndarray
     azimuth: np.ndarray
     elevation: np.ndarray
-    vis_idx: list[bool] = field(init=False, repr=False)
+    _vis_idx: list[int] = field(init=False, repr=False)
 
-    def __len__(self) -> int:
-        return len(self.time)
+    @classmethod
+    def at(pos: PointSet, date: datetime, freq: timedelta) -> "SunTrack":
+        start_time = datetime.combine(date, datetime.min.time())
+        end_time = datetime.combine(date, datetime.max.time())
 
-    @property
-    def today_index(self) -> list[int]:
-        current_date = datetime.now().date()
+        times = pd.date_range(
+            start_time,
+            end_time,
+            freq=freq,
+            tz=date.tzinfo,
+        )
 
-        start_time = datetime.combine(current_date, datetime.min.time()).timestamp()
-        end_time = datetime.combine(current_date, datetime.max.time()).timestamp()
+        solpos = solarposition.get_solarposition(time=times, latitude=pos.x, longitude=pos.y, altitude=pos.z)
+        solpos = solpos.loc[solpos["apparent_elevation"] > 0, :]
 
-        return [idx for idx, time in enumerate(self.time) if start_time < time < end_time]
+        return SunTrack(
+            time=np.array([time.timestamp() for time in solpos.index], dtype=float),
+            azimuth=np.deg2rad(solpos["azimuth"].to_numpy(dtype=float)),
+            elevation=np.deg2rad(solpos["apparent_elevation"].to_numpy(dtype=float)),
+        )
+
+    def interpolate(self, query_time: float | np.ndarray) -> tuple[float | np.ndarray, float | np.ndarray]:
+        return np.interp(query_time, self.time, self.azimuth), np.interp(query_time, self.time, self.elevation)
+
+    def intersect_with_oaem(self, oaem: Oaem) -> None:
+        self._vis_idx = [
+            elevation > oaem.query(azimuth=azimuth) for azimuth, elevation in zip(self.azimuth, self.elevation)
+        ]
+
+    def _time_to_index(self, query_time: float) -> int:
+        return np.argmin(np.abs(self.time - query_time))
+
+    def is_visible(self, query_time: float) -> bool:
+        return self._vis_idx[self._time_to_index(query_time)]
+
+
+@dataclass
+class SunSpan:
+    pos: PointSet
+
+    def __post_init__(self) -> None:
+        self.pos.to_epsg(4326)
+
+    @cached_property
+    def sun_track_of_day(self, date: datetime, freq: timedelta = timedelta(minutes=1)) -> list[int]:
+        start_time = datetime.combine(date, datetime.min.time())
+        end_time = datetime.combine(date, datetime.max.time())
+
+        times = pd.date_range(
+            start_time,
+            end_time,
+            freq=freq,
+            tz=date.tzinfo,
+        )
+
+        solpos = solarposition.get_solarposition(
+            time=times, latitude=self.pos.x, longitude=self.pos.y, altitude=self.pos.z
+        )
+        solpos = solpos.loc[solpos["apparent_elevation"] > 0, :]
+
+        return SunTrack(
+            time=np.array([time.timestamp() for time in solpos.index], dtype=float),
+            azimuth=np.deg2rad(solpos["azimuth"].to_numpy(dtype=float)),
+            elevation=np.deg2rad(solpos["apparent_elevation"].to_numpy(dtype=float)),
+        )
 
     @property
     def today_time(self) -> np.ndarray:
@@ -45,7 +100,7 @@ class SunSpan:
     def intersect_with_oaem(self, oaem: Oaem) -> None:
         interp_elevation = oaem.query(self.azimuth)
         self.vis_idx = [
-            sun_elevation < mask_elevation for sun_elevation, mask_elevation in zip(self.elevation, interp_elevation)
+            sun_elevation > mask_elevation for sun_elevation, mask_elevation in zip(self.elevation, interp_elevation)
         ]
 
     def query_azimuth(self, query_time: float) -> float:
@@ -65,34 +120,29 @@ class SunSpan:
             return 0.0
 
     def query_visibility(self, query_time: float) -> bool:
-        time_minute_precision = round(query_time / 60) * 60
+        pass
 
-        try:
-            return self.vis_idx[self.time.index(time_minute_precision)]
-        except ValueError:
-            return False
-
-    def since(self, query_time: float) -> float:
+    def since(self, query_time: float) -> float | None:
         """Returns the first timestamp when the current visibility state started"""
         time_minute_precision = round(query_time / 60) * 60
 
         try:
             current_time_index = self.time.index(time_minute_precision)
         except ValueError:
-            return 0.0
+            return None
 
         for i in range(current_time_index, 0, -1):
             if self.vis_idx[i] != self.vis_idx[current_time_index]:
                 return self.time[i]
 
-    def until(self, query_time: float) -> float:
+    def until(self, query_time: float) -> float | None:
         """Returns the first timestamp when the current visibility state ends"""
-        time_minute_precision = round(query_time / 60) * 60
+        time_minute_precision = float(round(query_time / 60) * 60)
 
         try:
             current_time_index = self.time.index(time_minute_precision)
         except ValueError:
-            return 0.0
+            return None
 
         for i in range(current_time_index, len(self.time)):
             if self.vis_idx[i] != self.vis_idx[current_time_index]:

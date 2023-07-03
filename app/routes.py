@@ -180,16 +180,17 @@ def create_json_fig(width: int, height: int, heading: float, oaem: Oaem, sunspan
         ),
     )
 
-    # add a single point for the current sun position
-    fig.add_trace(
-        trace=go.Scatterpolar(
-            theta=[np.rad2deg(sunspan.query_azimuth(query_time))],
-            r=[np.rad2deg(np.pi / 2 - sunspan.query_elevation(query_time))],
-            name="Sun Position",
-            mode="markers",
-            marker=dict(size=40, color="gold"),
-        ),
-    )
+    if sunspan.query_elevation(query_time) > 0:
+        fig.add_trace(
+            trace=go.Scatterpolar(
+                theta=[np.rad2deg(sunspan.query_azimuth(query_time))],
+                r=[np.rad2deg(np.pi / 2 - sunspan.query_elevation(query_time))],
+                name="Sun Position",
+                mode="markers",
+                marker=dict(size=40, color="gold"),
+            ),
+        )
+
     fig.update_layout(
         polar=dict(
             angularaxis=dict(direction="clockwise", rotation=90 + heading),
