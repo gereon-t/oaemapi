@@ -22,7 +22,7 @@ APP_HOST = "0.0.0.0"
 APP_PORT = 8000
 logging.basicConfig(
     format="%(levelname)-8s %(asctime)s.%(msecs)03d - %(message)s",
-    level=logging.INFO,
+    level=logging.ERROR,
     datefmt="%Y-%m-%d %H:%M:%S",
     filename="./oaemapi.log",
 )

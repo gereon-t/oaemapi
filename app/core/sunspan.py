@@ -20,6 +20,27 @@ class SunSpan:
         return len(self.time)
 
     @property
+    def today_index(self) -> list[int]:
+        current_date = datetime.now().date()
+
+        start_time = datetime.combine(current_date, datetime.min.time()).timestamp()
+        end_time = datetime.combine(current_date, datetime.max.time()).timestamp()
+
+        return [idx for idx, time in enumerate(self.time) if start_time < time < end_time]
+
+    @property
+    def today_time(self) -> np.ndarray:
+        return self.time[self.today_index]
+
+    @property
+    def today_elevation(self) -> np.ndarray:
+        return self.elevation[self.today_index]
+
+    @property
+    def today_azimuth(self) -> np.ndarray:
+        return self.azimuth[self.today_index]
+
+    @property
     def time_range(self) -> timedelta:
         return timedelta(seconds=self.time[-1] - self.time[0])
 
@@ -27,9 +48,7 @@ class SunSpan:
         interp_oaem = oaem.interpolate(self.azimuth)
         self.vis_idx = [
             sun_elevation > mask_elevation
-            for sun_elevation, mask_elevation in zip(
-                self.elevation, interp_oaem.elevation
-            )
+            for sun_elevation, mask_elevation in zip(self.elevation, interp_oaem.elevation)
         ]
 
     def query_azimuth(self, query_time: float) -> float:
@@ -39,7 +58,7 @@ class SunSpan:
             return self.azimuth[self.time.index(time_minute_precision)]
         except ValueError:
             return 0.0
-        
+
     def query_elevation(self, query_time: float) -> float:
         time_minute_precision = round(query_time / 60) * 60
 
@@ -88,8 +107,8 @@ def compute_sunspan(pos: PointSet) -> SunSpan:
     pos.to_epsg(4326)
 
     current_date = datetime.now().date()
-    start_time = datetime.combine(current_date, datetime.min.time())
-    end_time = start_time + timedelta(days=1)
+    start_time = datetime.combine(current_date - timedelta(days=1), datetime.min.time())
+    end_time = datetime.combine(current_date + timedelta(days=1), datetime.max.time())
     times = pd.date_range(
         start_time,
         end_time,

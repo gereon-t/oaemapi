@@ -22,9 +22,7 @@ async def favicon():
 
 @router.get("/", include_in_schema=False)
 async def index(request: Request):
-    return templates.TemplateResponse(
-        "index.html", {"request": request, "version": VERSION}
-    )
+    return templates.TemplateResponse("index.html", {"request": request, "version": VERSION})
 
 
 @router.get("/privacy_policy", include_in_schema=False)
@@ -59,9 +57,7 @@ async def oaem_request(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> d
                           Azimuth and elevation are given in radians.
             - within_area (bool): A boolean indicating whether the provided position is within the area of operation.
     """
-    logger.info(
-        f"Received API request for position [{pos_x:.3f}, {pos_y:.3f}, {pos_z:.3f}], EPSG: {epsg}"
-    )
+    logger.info(f"Received API request for position [{pos_x:.3f}, {pos_y:.3f}, {pos_z:.3f}], EPSG: {epsg}")
 
     query_time = time()
     oaem, within_area = compute_oaem(pos_x=pos_x, pos_y=pos_y, pos_z=pos_z, epsg=epsg)
@@ -148,9 +144,7 @@ async def plot(
     }
 
 
-def create_json_fig(
-    width: int, height: int, heading: float, oaem: Oaem, sunspan: SunSpan
-) -> str | None | Any:
+def create_json_fig(width: int, height: int, heading: float, oaem: Oaem, sunspan: SunSpan) -> str | None | Any:
     """
     Creates a Plotly scatterpolar figure of the Obstruction Adaptive Elevation Mask (OAEM) for a given position and EPSG code.
 
@@ -178,8 +172,8 @@ def create_json_fig(
 
     fig.add_trace(
         trace=go.Scatterpolar(
-            theta=np.rad2deg(sunspan.azimuth),
-            r=np.rad2deg(np.pi / 2 - sunspan.elevation),
+            theta=np.rad2deg(sunspan.today_azimuth),
+            r=np.rad2deg(np.pi / 2 - sunspan.today_elevation),
             name="Sun Trajectory",
             line_color="black",
         ),
@@ -192,7 +186,7 @@ def create_json_fig(
             r=[np.rad2deg(np.pi / 2 - sunspan.query_elevation(query_time))],
             name="Sun Position",
             mode="markers",
-            marker=dict(size=40, color = "gold"),
+            marker=dict(size=40, color="gold"),
         ),
     )
     fig.update_layout(
