@@ -9,20 +9,6 @@ function convertUnixTimestamp(unixTimestamp) {
     return date.toLocaleString();  // Convert the date to a localized string representation
 }
 
-function request_sunvis(latitude, longitude, height) {
-    $.ajax({
-        url: `/sunvis?pos_x=${latitude}&pos_y=${longitude}&pos_z=${height}&epsg=4326`,
-        type: "GET",
-        dataType: "json",
-        success: function (response) {
-            document.getElementById('sun-visibility').innerText = `Sun Visibility: ${response.visible}, Since: ${convertUnixTimestamp(response.since)}, Until: ${convertUnixTimestamp(response.until)} `;
-        },
-        error: function (error) {
-            console.error('Error getting sun visibility:', error);
-        }
-    });
-}
-
 function handle_plot_response(response) {
     let within_area = JSON.parse(response.within_area);
     if (within_area === false) {
@@ -31,8 +17,7 @@ function handle_plot_response(response) {
     } else {
         document.getElementById('position').style.color = 'black';
     }
-    document.getElementById('sun-visibility').innerText = `Sun Visibility: ${response.visible}, Since: ${convertUnixTimestamp(response.since)}, Until: ${convertUnixTimestamp(response.until)}`;
-
+    document.getElementById('sunvisibility').innerText = `Sun Visibility: ${response.visible}, Since: ${convertUnixTimestamp(response.since)}, Until: ${convertUnixTimestamp(response.until)}`;
     let fig = JSON.parse(response.data);
     Plotly.newPlot("plot", fig.data, fig.layout);
 }

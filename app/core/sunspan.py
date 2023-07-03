@@ -1,12 +1,10 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from functools import lru_cache
+from app.core.oaem import Oaem
 import numpy as np
 import pandas as pd
 from pointset import PointSet
 from pvlib import solarposition
-
-from app.core.oaem import Oaem
 
 
 @dataclass
@@ -45,10 +43,9 @@ class SunSpan:
         return timedelta(seconds=self.time[-1] - self.time[0])
 
     def intersect_with_oaem(self, oaem: Oaem) -> None:
-        interp_oaem = oaem.interpolate(self.azimuth)
+        interp_elevation = oaem.query(self.azimuth)
         self.vis_idx = [
-            sun_elevation > mask_elevation
-            for sun_elevation, mask_elevation in zip(self.elevation, interp_oaem.elevation)
+            sun_elevation < mask_elevation for sun_elevation, mask_elevation in zip(self.elevation, interp_elevation)
         ]
 
     def query_azimuth(self, query_time: float) -> float:
@@ -67,7 +64,7 @@ class SunSpan:
         except ValueError:
             return 0.0
 
-    def visible(self, query_time: float) -> bool:
+    def query_visibility(self, query_time: float) -> bool:
         time_minute_precision = round(query_time / 60) * 60
 
         try:
@@ -102,11 +99,9 @@ class SunSpan:
                 return self.time[i]
 
 
-@lru_cache(maxsize=4096)
-def compute_sunspan(pos: PointSet) -> SunSpan:
+def compute_sunspan(pos: PointSet, current_date: datetime) -> SunSpan:
     pos.to_epsg(4326)
 
-    current_date = datetime.now().date()
     start_time = datetime.combine(current_date - timedelta(days=1), datetime.min.time())
     end_time = datetime.combine(current_date + timedelta(days=1), datetime.max.time())
     times = pd.date_range(

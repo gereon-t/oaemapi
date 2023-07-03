@@ -1,3 +1,4 @@
+from datetime import datetime
 from time import time
 from typing import Any
 
@@ -77,18 +78,18 @@ async def oaem_request(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> d
 async def sunvis(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> dict:
     query_time = time()
     oaem, within_area = compute_oaem(pos_x=pos_x, pos_y=pos_y, pos_z=pos_z, epsg=epsg)
-    sunspan = compute_sunspan(pos=oaem.pos)
+    sunspan = compute_sunspan(pos=oaem.pos, current_date=datetime.now().date())
     sunspan.intersect_with_oaem(oaem)
+    sun_visible = sunspan.query_visibility(query_time)
     response_time = time()
 
     logger.info(
         f"Computed sun visibility for position [{pos_x:.3f}, {pos_y:.3f}, {pos_z:.3f}], EPSG: {epsg} in {(response_time-query_time)*1000:.3f} ms"
     )
-    logger.info(f"Sunspan cache info: {compute_sunspan.cache_info()}")
     logger.info(f"Position cache info: {compute_oaem.cache_info()}")
 
     return {
-        "visible": str(sunspan.visible(query_time)),
+        "visible": str(sun_visible),
         "since": str(sunspan.since(query_time)),
         "until": str(sunspan.until(query_time)),
         "within_area": within_area,
@@ -127,17 +128,17 @@ async def plot(
     """
     query_time = time()
     oaem, within_area = compute_oaem(pos_x=pos_x, pos_y=pos_y, pos_z=pos_z, epsg=epsg)
-    sunspan = compute_sunspan(pos=oaem.pos)
+    sunspan = compute_sunspan(pos=oaem.pos, current_date=datetime.now().date())
     sunspan.intersect_with_oaem(oaem)
+    sun_visible = sunspan.query_visibility(query_time)
 
     logger.info(f"Position cache info: {compute_oaem.cache_info()}")
-    logger.info(f"Sunspan cache info: {compute_sunspan.cache_info()}")
     fig_json = create_json_fig(width, height, heading, oaem, sunspan)
 
     return {
         "data": fig_json,
         "within_area": within_area,
-        "visible": str(sunspan.visible(query_time)),
+        "visible": str(sun_visible),
         "since": str(sunspan.since(query_time)),
         "until": str(sunspan.until(query_time)),
         "within_area": within_area,

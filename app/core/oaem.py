@@ -21,28 +21,19 @@ class Oaem:
     """
 
     pos: PointSet
-    azimuth: np.ndarray = field(
-        default_factory=lambda: np.arange(0, 2 * np.pi, OAEM_RES)
-    )
-    elevation: np.ndarray = field(
-        default_factory=lambda: np.zeros_like(np.arange(0, 2 * np.pi, OAEM_RES))
-    )
+    azimuth: np.ndarray = field(default_factory=lambda: np.arange(0, 2 * np.pi, OAEM_RES))
+    elevation: np.ndarray = field(default_factory=lambda: np.zeros_like(np.arange(0, 2 * np.pi, OAEM_RES)))
 
     @property
     def az_el_str(self) -> str:
-        return "".join(
-            f"{az:.3f}:{el:.3f}," for az, el in zip(self.azimuth, self.elevation)
-        )
+        return "".join(f"{az:.3f}:{el:.3f}," for az, el in zip(self.azimuth, self.elevation))
 
-    def interpolate(self, azimuths: list[float] or np.ndarray) -> "Oaem":
-        interp_elevation = np.interp(azimuths, self.azimuth, self.elevation)
-        return Oaem(pos=self.pos.copy(), azimuth=azimuths, elevation=interp_elevation)
+    def query(self, azimuth: float | np.ndarray) -> float | np.ndarray:
+        return np.interp(azimuth, self.azimuth, self.elevation)
 
 
 @lru_cache(maxsize=16384)
-def compute_oaem(
-    pos_x: float, pos_y: float, pos_z: float, epsg: int
-) -> tuple[Oaem, bool]:
+def compute_oaem(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> tuple[Oaem, bool]:
     """
     Computes an Obstruction Adaptive Elevation Model (OAEM) for a given position in space.
 
@@ -56,23 +47,14 @@ def compute_oaem(
         Oaem: An Obstruction Adaptive Elevation Model (OAEM) that stores the elevation data for the given position in space.
         bool: True if the position is inside the area of operation, False otherwise.
     """
-    pos = PointSet(
-        xyz=np.array([pos_x, pos_y, pos_z]), epsg=epsg, init_local_transformer=False
-    ).to_epsg(WFS_EPSG)
+    pos = PointSet(xyz=np.array([pos_x, pos_y, pos_z]), epsg=epsg, init_local_transformer=False).to_epsg(WFS_EPSG)
 
-    if (
-        area_of_operation is not None
-        and not area_of_operation.geometry.contains(Point(pos.x, pos.y))[0]
-    ):
-        logger.warning(
-            f"Position [{pos.x:.3f}, {pos.y:.3f}, {pos.z:.3f}] is outside the area of operation."
-        )
+    if area_of_operation is not None and not area_of_operation.geometry.contains(Point(pos.x, pos.y))[0]:
+        logger.warning(f"Position [{pos.x:.3f}, {pos.y:.3f}, {pos.z:.3f}] is outside the area of operation.")
         return Oaem(), False
 
     pos.z -= geoid.interpolate(pos=pos.round_to(GEOID_RES))
-    logger.info(
-        f"Position in APP EPSG (orthometric): [{pos.x:.3f}, {pos.y:.3f}, {pos.z:.3f}], EPSG: {pos.epsg}"
-    )
+    logger.info(f"Position in APP EPSG (orthometric): [{pos.x:.3f}, {pos.y:.3f}, {pos.z:.3f}], EPSG: {pos.epsg}")
     logger.info(f"Geoid cache info: {geoid.interpolate.cache_info()}")
 
     edge_list = request_wfs_lod1(pos=pos.round_to(N_RES))
@@ -124,9 +106,7 @@ def build_interval_tree(edge_list: list[Edge], pos: np.ndarray) -> IntervalTree:
         IntervalTree: An interval tree that stores the intervals of azimuth angles that intersect with the edges.
     """
 
-    def add_to_interval_tree(
-        interval_tree: IntervalTree, start: float, end: float, data: float
-    ) -> None:
+    def add_to_interval_tree(interval_tree: IntervalTree, start: float, end: float, data: float) -> None:
         if start == end:
             return
         interval_tree.addi(start, end, data)
@@ -138,12 +118,8 @@ def build_interval_tree(edge_list: list[Edge], pos: np.ndarray) -> IntervalTree:
         az_1 = np.arctan2(edge.start[0] - pos[0], edge.start[1] - pos[1])
         az_2 = np.arctan2(edge.end[0] - pos[0], edge.end[1] - pos[1])
         if np.sign(az_1) != np.sign(az_2) and np.abs(az_1 - az_2) > np.pi:
-            add_to_interval_tree(
-                interval_tree=interval_tree, start=-np.pi, end=min(az_1, az_2), data=i
-            )
-            add_to_interval_tree(
-                interval_tree=interval_tree, start=max(az_1, az_2), end=np.pi, data=i
-            )
+            add_to_interval_tree(interval_tree=interval_tree, start=-np.pi, end=min(az_1, az_2), data=i)
+            add_to_interval_tree(interval_tree=interval_tree, start=max(az_1, az_2), end=np.pi, data=i)
         else:
             add_to_interval_tree(
                 interval_tree=interval_tree,
@@ -152,7 +128,5 @@ def build_interval_tree(edge_list: list[Edge], pos: np.ndarray) -> IntervalTree:
                 data=i,
             )
 
-    logger.debug(
-        f"Building interval tree with {len(interval_tree)} intervals took {time.time() - start_time} seconds"
-    )
+    logger.debug(f"Building interval tree with {len(interval_tree)} intervals took {time.time() - start_time} seconds")
     return interval_tree
