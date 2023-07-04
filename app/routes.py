@@ -159,7 +159,10 @@ def create_json_fig(width: int, height: int, heading: float, oaem: Oaem, sun_tra
     Returns:
         str: A JSON string representation of the Plotly figure.
     """
-    today_sun_track = sun_track.get_sun_track(date=datetime.now().astimezone(), daylight_only=True)
+    date = datetime.now().astimezone()
+    start_date = datetime.combine(date, datetime.min.time())
+    end_date = datetime.combine(date, datetime.max.time())
+    today_sun_track = sun_track.get_sun_track(start_date=start_date, end_date=end_date, daylight_only=True)
     fig = go.Figure()
 
     fig.add_trace(
@@ -167,7 +170,7 @@ def create_json_fig(width: int, height: int, heading: float, oaem: Oaem, sun_tra
             theta=np.rad2deg(oaem.azimuth),
             r=np.rad2deg(np.pi / 2 - oaem.elevation),
             fill="toself",
-            fillcolor="#c9eaf8",
+            fillcolor="#96d0ff",
             name="Obstruction Adaptive Elevation Mask",
         ),
     )
@@ -202,10 +205,13 @@ def create_json_fig(width: int, height: int, heading: float, oaem: Oaem, sun_tra
                 ticktext=["90°", "75°", "60°", "45°", "30°", "15°"],
                 tickangle=90,
             ),
+            bgcolor="#c2c2c2",
         ),
         width=width,
         height=height,
         font=dict(size=30),
         showlegend=False,
+        paper_bgcolor="#e5ecf6",
+        plot_bgcolor="#fff",
     )
     return fig.to_json()

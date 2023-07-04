@@ -9,18 +9,21 @@
 </head>
 
 <body>
+    <header>
+        <h1 class="title">Obstruction Adaptive Elevation Mask API</h1>
+    </header>
+
     <div class="container">
-        <h1>Obstruction Adaptive Elevation Mask API</h1>
-        <h3 id="position">Current Position: Waiting For Geolocation Data...</h3>
-        <h3 id="sunvisibility">Sun Visibility Currently Not Available</h3>
+        <h3 class="position" id="position">Current Position: Waiting For Geolocation Data...</h3>
+        <h4 id="sun"></h4>
     </div>
 
     <div id="plot"></div>
 
-    <footer style="text-align: center;">
-        <p><a href="/privacy_policy">Datenschutzerklärung</a> • <a href="https://github.com/gereon-t/oaemapi">Code</a> •
-            Version {{ version
-            }}
+    <footer>
+        <p class="footer-text"><a href="/privacy_policy">Datenschutzerklärung</a> • <a
+                href="https://github.com/gereon-t/oaemapi">Code</a> •
+            Version {{ version }}
         </p>
     </footer>
 

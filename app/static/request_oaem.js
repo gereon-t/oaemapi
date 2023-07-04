@@ -5,19 +5,25 @@ function convertUnixTimestamp(unixTimestamp) {
         return "Unknown"
     }
 
-    const date = new Date(timestampNumber * 1000);  // Multiply by 1000 to convert from seconds to milliseconds
-    return date.toLocaleString();  // Convert the date to a localized string representation
+    const date = new Date(timestampNumber * 1000);
+    return date.toLocaleString();
 }
 
 function handle_plot_response(response) {
     let within_area = JSON.parse(response.within_area);
+
     if (within_area === false) {
         document.getElementById('position').style.color = 'red';
-        document.getElementById('position').innerText = `Current Position: ${latitude}°, ${longitude}°, ${height} m\n is outside of the coverage area.`;
+        document.getElementById('position').textContent = `Current Position: ${latitude}°, ${longitude}°, ${height} m\n is outside of the coverage area.`;
     } else {
         document.getElementById('position').style.color = 'black';
     }
-    document.getElementById('sunvisibility').innerText = `Sun Visibility: ${response.visible}, Since: ${convertUnixTimestamp(response.since)}, Until: ${convertUnixTimestamp(response.until)}`;
+    const sunVisibilityText = `Sun Visibility: ${response.visible}`;
+    const sunSinceText = `Since: ${convertUnixTimestamp(response.since)}`;
+    const sunUntilText = `Until: ${convertUnixTimestamp(response.until)}`;
+
+    document.getElementById('sun').innerHTML = `${sunVisibilityText}<br>${sunSinceText}<br>${sunUntilText}`;
+
     let fig = JSON.parse(response.data);
     Plotly.newPlot("plot", fig.data, fig.layout);
 }

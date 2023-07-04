@@ -17,16 +17,17 @@ class SunTrack:
         self.pos.to_epsg(4326)
 
     def get_sun_track(
-        self, date: datetime, freq: timedelta = timedelta(minutes=1), daylight_only: bool = False
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        freq: timedelta = timedelta(minutes=1),
+        daylight_only: bool = False,
     ) -> np.ndarray:
-        start_time = datetime.combine(date, datetime.min.time())
-        end_time = datetime.combine(date, datetime.max.time())
-
         times = pd.date_range(
-            start_time,
-            end_time,
+            start_date,
+            end_date,
             freq=freq,
-            tz=date.tzinfo,
+            tz=start_date.tzinfo,
         )
 
         solpos = solarposition.get_solarposition(
@@ -52,7 +53,9 @@ class SunTrack:
 
     def intersect_with_oaem(self, oaem: Oaem) -> None:
         date = datetime.now().astimezone()
-        sun_track = self.get_sun_track(date=date)
+        start_date = datetime.combine(date, datetime.min.time())
+        end_date = datetime.combine(date + timedelta(days=1), datetime.max.time())
+        sun_track = self.get_sun_track(start_date=start_date, end_date=end_date)
         oaem_query_func = np.vectorize(oaem.query)
         oaem_elevations = oaem_query_func(sun_track[:, 1])
 
