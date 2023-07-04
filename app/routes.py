@@ -10,7 +10,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse
 from app.config import FAVICON_PATH, VERSION, logger
 from app.core.oaem import Oaem, compute_oaem
-from app.core.sunspan import SunSpan, compute_sunspan
+from app.core.sunspan import SunTrack
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -78,9 +78,10 @@ async def oaem_request(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> d
 async def sunvis(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> dict:
     query_time = time()
     oaem, within_area = compute_oaem(pos_x=pos_x, pos_y=pos_y, pos_z=pos_z, epsg=epsg)
-    sunspan = compute_sunspan(pos=oaem.pos, current_date=datetime.now().date())
-    sunspan.intersect_with_oaem(oaem)
-    sun_visible = sunspan.query_visibility(query_time)
+    sun_track = SunTrack(pos=oaem.pos)
+    sun_track.intersect_with_oaem(oaem)
+    sun_az, sun_el = sun_track.current_sunpos
+    sun_visible = sun_el > oaem.query(sun_az)
     response_time = time()
 
     logger.info(
@@ -90,8 +91,8 @@ async def sunvis(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> dict:
 
     return {
         "visible": str(sun_visible),
-        "since": str(sunspan.since(query_time)),
-        "until": str(sunspan.until(query_time)),
+        "since": str(sun_track.since),
+        "until": str(sun_track.until),
         "within_area": within_area,
     }
 
@@ -126,26 +127,26 @@ async def plot(
 
         A JSON string representation of the Plotly figure.
     """
-    query_time = time()
     oaem, within_area = compute_oaem(pos_x=pos_x, pos_y=pos_y, pos_z=pos_z, epsg=epsg)
-    sunspan = compute_sunspan(pos=oaem.pos, current_date=datetime.now().date())
-    sunspan.intersect_with_oaem(oaem)
-    sun_visible = sunspan.query_visibility(query_time)
+    sun_track = SunTrack(pos=oaem.pos)
+    sun_track.intersect_with_oaem(oaem)
+    sun_az, sun_el = sun_track.current_sunpos
+    sun_visible = sun_el > oaem.query(sun_az)
 
     logger.info(f"Position cache info: {compute_oaem.cache_info()}")
-    fig_json = create_json_fig(width, height, heading, oaem, sunspan)
+    fig_json = create_json_fig(width, height, heading, oaem, sun_track)
 
     return {
         "data": fig_json,
         "within_area": within_area,
         "visible": str(sun_visible),
-        "since": str(sunspan.since(query_time)),
-        "until": str(sunspan.until(query_time)),
+        "since": str(sun_track.since),
+        "until": str(sun_track.until),
         "within_area": within_area,
     }
 
 
-def create_json_fig(width: int, height: int, heading: float, oaem: Oaem, sunspan: SunSpan) -> str | None | Any:
+def create_json_fig(width: int, height: int, heading: float, oaem: Oaem, sun_track: SunTrack) -> str | None | Any:
     """
     Creates a Plotly scatterpolar figure of the Obstruction Adaptive Elevation Mask (OAEM) for a given position and EPSG code.
 
@@ -158,7 +159,7 @@ def create_json_fig(width: int, height: int, heading: float, oaem: Oaem, sunspan
     Returns:
         str: A JSON string representation of the Plotly figure.
     """
-    query_time = time()
+    today_sun_track = sun_track.get_sun_track(date=datetime.now().astimezone(), daylight_only=True)
     fig = go.Figure()
 
     fig.add_trace(
@@ -173,18 +174,18 @@ def create_json_fig(width: int, height: int, heading: float, oaem: Oaem, sunspan
 
     fig.add_trace(
         trace=go.Scatterpolar(
-            theta=np.rad2deg(sunspan.today_azimuth),
-            r=np.rad2deg(np.pi / 2 - sunspan.today_elevation),
+            theta=np.rad2deg(today_sun_track[:, 1]),
+            r=np.rad2deg(np.pi / 2 - today_sun_track[:, 2]),
             name="Sun Trajectory",
             line_color="black",
         ),
     )
-
-    if sunspan.query_elevation(query_time) > 0:
+    current_sun_az, current_sun_el = sun_track.current_sunpos
+    if current_sun_el > 0:
         fig.add_trace(
             trace=go.Scatterpolar(
-                theta=[np.rad2deg(sunspan.query_azimuth(query_time))],
-                r=[np.rad2deg(np.pi / 2 - sunspan.query_elevation(query_time))],
+                theta=[np.rad2deg(current_sun_az)],
+                r=[np.rad2deg(np.pi / 2 - current_sun_el)],
                 name="Sun Position",
                 mode="markers",
                 marker=dict(size=40, color="gold"),

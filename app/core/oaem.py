@@ -21,7 +21,7 @@ class Oaem:
     """
 
     pos: PointSet
-    azimuth: np.ndarray = field(default_factory=lambda: np.arange(0, 2 * np.pi, OAEM_RES))
+    azimuth: np.ndarray = field(default_factory=lambda: np.arange(-np.pi, np.pi, OAEM_RES))
     elevation: np.ndarray = field(default_factory=lambda: np.zeros_like(np.arange(0, 2 * np.pi, OAEM_RES)))
 
     @property
