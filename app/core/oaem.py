@@ -23,12 +23,21 @@ class Oaem:
     pos: PointSet
     azimuth: np.ndarray = field(default_factory=lambda: np.arange(-np.pi, np.pi, OAEM_RES))
     elevation: np.ndarray = field(default_factory=lambda: np.zeros_like(np.arange(0, 2 * np.pi, OAEM_RES)))
+    res: float = OAEM_RES
+
+    def __post_init__(self) -> None:
+        az_idx = np.argsort(self.azimuth)
+        self.azimuth = self.azimuth[az_idx]
+        self.elevation = self.elevation[az_idx]
 
     @property
     def az_el_str(self) -> str:
         return "".join(f"{az:.3f}:{el:.3f}," for az, el in zip(self.azimuth, self.elevation))
 
-    def query(self, azimuth: float | np.ndarray) -> float | np.ndarray:
+    def query(self, azimuth: float) -> np.ndarray:
+        if azimuth > np.pi:
+            azimuth -= 2 * np.pi
+
         return np.interp(azimuth, self.azimuth, self.elevation)
 
 
