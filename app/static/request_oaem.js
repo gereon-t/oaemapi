@@ -5,8 +5,8 @@ function convertUnixTimestamp(unixTimestamp) {
         return "Unknown"
     }
 
-    const date = new Date(timestampNumber * 1000);  // Multiply by 1000 to convert from seconds to milliseconds
-    return date.toLocaleString();  // Convert the date to a localized string representation
+    const date = new Date(timestampNumber * 1000);
+    return date.toLocaleString();
 }
 
 function handle_plot_response(response) {

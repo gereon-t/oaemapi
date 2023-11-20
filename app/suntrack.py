@@ -5,7 +5,7 @@ import pandas as pd
 from pointset import PointSet
 from pvlib import solarposition
 
-from app.core.oaem import Oaem
+from app.oaem import Oaem
 
 
 @dataclass
@@ -17,7 +17,10 @@ class SunTrack:
         self.pos.to_epsg(4326)
 
     def get_sun_track(
-        self, date: datetime, freq: timedelta = timedelta(minutes=1), daylight_only: bool = False
+        self,
+        date: datetime,
+        freq: timedelta = timedelta(minutes=1),
+        daylight_only: bool = False,
     ) -> np.ndarray:
         start_time = datetime.combine(date, datetime.min.time())
         end_time = datetime.combine(date, datetime.max.time())
@@ -48,7 +51,9 @@ class SunTrack:
         solpos = solarposition.get_solarposition(
             time=date, latitude=self.pos.x, longitude=self.pos.y, altitude=self.pos.z
         )
-        return float(np.deg2rad(solpos["azimuth"].iloc[0])), float(np.deg2rad(solpos["apparent_elevation"].iloc[0]))
+        return float(np.deg2rad(solpos["azimuth"].iloc[0])), float(
+            np.deg2rad(solpos["apparent_elevation"].iloc[0])
+        )
 
     def intersect_with_oaem(self, oaem: Oaem) -> None:
         date = datetime.now().astimezone()

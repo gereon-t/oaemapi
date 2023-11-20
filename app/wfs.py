@@ -3,14 +3,14 @@ import requests
 from pointset import PointSet
 
 from app.config import N_RANGE, WFS_BASE_REQUEST, WFS_EPSG, WFS_URL, logger
-from app.core.edge import Edge
+from app.edge import Edge
 
 import numpy as np
 import xmltodict
 
 
 @lru_cache(maxsize=1024)
-def request_wfs_lod1(pos: PointSet, nrange: float = N_RANGE) -> list[Edge]:
+def edge_list_from_wfs(pos: PointSet, nrange: float = N_RANGE) -> list[Edge]:
     """
     Sends a request to the WFS server to retrieve the Level of Detail 1 (LOD1) CityGML data
     for the specified position.
@@ -28,12 +28,16 @@ def request_wfs_lod1(pos: PointSet, nrange: float = N_RANGE) -> list[Edge]:
     """
     pos.to_epsg(WFS_EPSG)
     logger.info(
-        f"Position in WFS EPSG: [{pos.x:.3f}, {pos.y:.3f}, {pos.z:.3f}], EPSG: {WFS_EPSG}"
+        "Position in WFS EPSG: %.3f, %.3f, %.3f], EPSG: %i",
+        pos.x,
+        pos.y,
+        pos.z,
+        WFS_EPSG,
     )
     request_url = create_request(pos=pos, nrange=nrange)
-    logger.debug(f"Sending request {request_url}")
-    response = requests.get(request_url)
-    logger.debug(f"received answer. Status code: {response.status_code}")
+    logger.debug("Sending request %s", request_url)
+    response = requests.get(request_url, timeout=10)
+    logger.debug("received answer. Status code: %s", response.status_code)
 
     if response.status_code != 200:
         raise requests.RequestException("WFS request failed!")
@@ -72,7 +76,10 @@ def parse_response(response: requests.Response) -> list[Edge]:
     """
     logger.debug("parsing response ...")
     gml = xmltodict.parse(response.content)
+    return gml_to_edge_list(gml)
 
+
+def gml_to_edge_list(gml: dict) -> list[Edge]:
     edge_list = []
     cityobject_members = gml.get("core:CityModel", {}).get("core:cityObjectMember", {})
 

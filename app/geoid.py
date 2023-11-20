@@ -5,7 +5,7 @@ from pandas import read_csv
 from pointset import PointSet
 from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
 import numpy as np
-from app.config import GEOID_EPSG, WFS_EPSG, logger
+from app.config import GEOID_EPSG, GEOID_FILE, logger
 
 
 class InvalidInterpolatorError(Exception):
@@ -13,7 +13,7 @@ class InvalidInterpolatorError(Exception):
 
 
 class ZeroInterpolator:
-    def __call__(*args) -> float:
+    def __call__(self, *args) -> float:
         return 0.0
 
 
@@ -33,7 +33,7 @@ class Geoid:
 
     def __init__(
         self,
-        filename: str,
+        filename: str = GEOID_FILE,
         epsg: int = GEOID_EPSG,
         interpolator: Interpolator = Interpolator.LINEAR,
     ):
@@ -58,7 +58,7 @@ class Geoid:
         data = data.to_numpy()
 
         self.pos = PointSet(xyz=data, epsg=epsg)
-        self.pos.to_epsg(WFS_EPSG)
+        self.epsg = epsg
 
         # Interpolator
         if interpolator == Interpolator.NEAREST:
@@ -69,7 +69,9 @@ class Geoid:
             raise InvalidInterpolatorError()
 
         logger.info(
-            f"Initialized geoid from: {filename}, Number of grid points: {len(data)}"
+            "Initialized geoid from: %s, Number of grid points: %i",
+            filename,
+            len(self.pos.xyz),
         )
 
     @lru_cache(maxsize=2048)
@@ -83,7 +85,9 @@ class Geoid:
         Returns:
             float: The interpolated geoid undulation value.
         """
-        logger.debug(f"Interpolating geoid undulation for position: {pos.xyz}")
+        logger.debug("Interpolating geoid undulation for position: %s", pos.xyz)
+
+        pos.to_epsg(self.epsg)
 
         # interpolate
         return self.__interp(pos.x, pos.y)

@@ -1,16 +1,18 @@
 from datetime import datetime
 from time import time
-from typing import Any
+from typing import Any, Annotated
 
 import numpy as np
 import plotly.graph_objects as go
-from fastapi import Request, APIRouter
+from fastapi import Request, APIRouter, Depends
 
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse
 from app.config import FAVICON_PATH, VERSION, logger
-from app.core.oaem import Oaem, compute_oaem
-from app.core.sunspan import SunTrack
+from app.dependencies import get_edge_list, get_geoid
+from app.edge import Edge
+from app.oaem import Oaem, compute_oaem
+from app.suntrack import SunTrack
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -23,7 +25,9 @@ async def favicon():
 
 @router.get("/", include_in_schema=False)
 async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "version": VERSION})
+    return templates.TemplateResponse(
+        "index.html", {"request": request, "version": VERSION}
+    )
 
 
 @router.get("/privacy_policy", include_in_schema=False)
@@ -32,7 +36,14 @@ async def privacy_policy(request: Request):
 
 
 @router.get("/api")
-async def oaem_request(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> dict:
+async def oaem_request(
+    pos_x: float,
+    pos_y: float,
+    pos_z: float,
+    epsg: int,
+    geoid: Annotated[float, Depends(get_geoid)],
+    edges: Annotated[list[Edge], Depends(get_edge_list)],
+) -> dict:
     """
     Computes the Obstruction Adaptive Elevation Mask (OAEM) for a given position and EPSG code.
 
@@ -58,18 +69,27 @@ async def oaem_request(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> d
                           Azimuth and elevation are given in radians.
             - within_area (bool): A boolean indicating whether the provided position is within the area of operation.
     """
-    logger.info(f"Received API request for position [{pos_x:.3f}, {pos_y:.3f}, {pos_z:.3f}], EPSG: {epsg}")
+    logger.info(
+        "Received API request for position [%.3f, %.3f, %.3f], EPSG: %i",
+        pos_x,
+        pos_y,
+        pos_z,
+        epsg,
+    )
 
     query_time = time()
     oaem, within_area = compute_oaem(pos_x=pos_x, pos_y=pos_y, pos_z=pos_z, epsg=epsg)
     oaem_str = str(oaem.az_el_str)
     response_time = time()
 
-    logger.info(f"Position cache info: {compute_oaem.cache_info()}")
     logger.info(
-        f"Computed OAEM for position [{pos_x:.3f}, {pos_y:.3f}, {pos_z:.3f}], EPSG: {epsg} in {(response_time-query_time)*1000:.3f} ms"
+        "Computed OAEM for position [%.3f, %.3f, %.3f], EPSG: %i in %.3f ms",
+        pos_x,
+        pos_y,
+        pos_z,
+        epsg,
+        (response_time - query_time) * 1000,
     )
-    logger.info(f"Position cache info: {compute_oaem.cache_info()}")
 
     return {"data": oaem_str, "within_area": within_area}
 
@@ -146,7 +166,9 @@ async def plot(
     }
 
 
-def create_json_fig(width: int, height: int, heading: float, oaem: Oaem, sun_track: SunTrack) -> str | None | Any:
+def create_json_fig(
+    width: int, height: int, heading: float, oaem: Oaem, sun_track: SunTrack
+) -> str | None | Any:
     """
     Creates a Plotly scatterpolar figure of the Obstruction Adaptive Elevation Mask (OAEM) for a given position and EPSG code.
 
@@ -159,7 +181,9 @@ def create_json_fig(width: int, height: int, heading: float, oaem: Oaem, sun_tra
     Returns:
         str: A JSON string representation of the Plotly figure.
     """
-    today_sun_track = sun_track.get_sun_track(date=datetime.now().astimezone(), daylight_only=True)
+    today_sun_track = sun_track.get_sun_track(
+        date=datetime.now().astimezone(), daylight_only=True
+    )
     fig = go.Figure()
 
     fig.add_trace(
