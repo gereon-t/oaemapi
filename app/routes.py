@@ -191,7 +191,7 @@ def create_json_fig(
             theta=np.rad2deg(oaem.azimuth),
             r=np.rad2deg(np.pi / 2 - oaem.elevation),
             fill="toself",
-            fillcolor="#c9eaf8",
+            fillcolor="#96d0ff",
             name="Obstruction Adaptive Elevation Mask",
         ),
     )
@@ -226,10 +226,13 @@ def create_json_fig(
                 ticktext=["90°", "75°", "60°", "45°", "30°", "15°"],
                 tickangle=90,
             ),
+            bgcolor="#c2c2c2",
         ),
         width=width,
         height=height,
         font=dict(size=30),
         showlegend=False,
+        paper_bgcolor="#e5ecf6",
+        plot_bgcolor="#fff",
     )
     return fig.to_json()

@@ -1,20 +1,61 @@
 body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
     margin: 0;
     padding: 0;
     font-family: liberation_sans, sans-serif;
+    background-color: #e5ecf6;
+    color: #333;
+}
+
+header {
+    background-color: #55a4f8;
+    padding: 20px;
+    text-align: center;
 }
 
 .title {
     font-size: 32px;
     font-weight: bold;
-    margin-bottom: 20px;
+    margin: 0;
+    color: #fff;
+}
+
+.container {
+    text-align: center;
+    margin-top: 20px;
 }
 
 .position {
-    font-size: 24px;
+    font-size: 18px;
     margin-bottom: 10px;
+}
+
+#plot {
+    margin-top: 30px;
+}
+
+footer {
+    background-color: #e5ecf6;
+    padding: 10px 0;
+    text-align: center;
+    margin-top: 30px;
+}
+
+.footer-text {
+    font-size: 14px;
+    margin: 0;
+}
+
+a {
+    color: #55a4f8;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+#sun {
+    text-align: center;
+    margin: 10px 0;
+    line-height: 1.5;
 }
