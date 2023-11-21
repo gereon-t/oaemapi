@@ -6,7 +6,7 @@ import numpy as np
 from intervaltree import Interval, IntervalTree
 from pointset import PointSet
 
-from app.config import WFS_EPSG, GEOID_RES, N_RES, OAEM_RES, logger
+from app.config import GEOID_RES, N_RES, OAEM_RES, WFS_EPSG, logger
 from app.edge import Edge
 from app.geoid import Geoid
 from app.wfs import edge_list_from_wfs

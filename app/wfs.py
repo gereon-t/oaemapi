@@ -1,12 +1,12 @@
 from functools import lru_cache
+
+import numpy as np
 import requests
 from pointset import PointSet
 
 from app.config import N_RANGE, WFS_BASE_REQUEST, WFS_EPSG, WFS_URL, logger
 from app.edge import Edge
-
-import numpy as np
-import xmltodict
+from app.gml import extract_lod1_coords
 
 
 @lru_cache(maxsize=1024)
@@ -75,70 +75,9 @@ def parse_response(response: requests.Response) -> list[Edge]:
         list[Edge]: A list of edges representing the building roof footprints.
     """
     logger.debug("parsing response ...")
-    gml = xmltodict.parse(response.content)
-    return gml_to_edge_list(gml)
+    building_coordinates = np.array(extract_lod1_coords(response.content))
 
-
-def gml_to_edge_list(gml: dict) -> list[Edge]:
-    edge_list = []
-    cityobject_members = gml.get("core:CityModel", {}).get("core:cityObjectMember", {})
-
-    if len(cityobject_members) == 0:
-        return edge_list
-
-    if not isinstance(cityobject_members, list):
-        cityobject_members = [cityobject_members]
-
-    for cobj in cityobject_members:
-        bldg = cobj.get("bldg:Building", {})
-
-        # single lod1Solid
-        if lod1solid := bldg.get("bldg:lod1Solid", {}):
-            if (face := parse_lod1solid(lod1solid)) is not None:
-                edge_list.extend(
-                    Edge(start=face[i], end=face[i + 1]) for i in range(len(face) - 1)
-                )
-
-        # multiple lod1Solids
-        if bldg_parts := bldg.get("bldg:consistsOfBuildingPart", {}):
-            for bpart in bldg_parts:
-                lod1solid = bpart.get("bldg:BuildingPart", {}).get("bldg:lod1Solid", {})
-                if (face := parse_lod1solid(lod1solid)) is not None:
-                    edge_list.extend(
-                        Edge(start=face[i], end=face[i + 1])
-                        for i in range(len(face) - 1)
-                    )
-
-    logger.debug("parsing response ... done")
-    return edge_list
-
-
-def parse_lod1solid(lod1solid: dict) -> np.ndarray | None:
-    """
-    Parses the lod1Solid element of a building and returns a numpy array of vertices
-    representing the roof footprint.
-
-    Args:
-        lod1solid (dict): The lod1Solid element of a building.
-
-    Returns:
-        np.ndarray | None: A numpy array of vertices representing the roof footprint,
-        or None if the lod1Solid element is empty.
-    """
-    surface_members = (
-        lod1solid.get("gml:Solid", {})
-        .get("gml:exterior", {})
-        .get("gml:CompositeSurface", {})
-        .get("gml:surfaceMember", {})
-    )
-
-    if not surface_members:
-        return None
-
-    roof = surface_members[0]
-    linear_ring_str: str = roof["gml:Polygon"]["gml:exterior"]["gml:LinearRing"][
-        "gml:posList"
+    return [
+        Edge(start=edge_coord[:3], end=edge_coord[3:])
+        for edge_coord in building_coordinates
     ]
-    linear_ring_arr = np.array(linear_ring_str.split(" "), dtype=float)
-
-    return np.c_[linear_ring_arr[::3], linear_ring_arr[1::3], linear_ring_arr[2::3]]

@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
-from shapely.geometry import Polygon
+
 import geopandas as gpd
+from shapely.geometry import Polygon
 
 
 @dataclass

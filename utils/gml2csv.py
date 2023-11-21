@@ -1,15 +1,5 @@
-import argparse
-from dataclasses import dataclass
-import os
+from functools import lru_cache
 import xmltodict
-from tqdm import tqdm
-import pandas as pd
-
-
-@dataclass
-class DummyParser:
-    path: str = "data/bonn_lod2"
-    out: str = "bonn_lod2.csv"
 
 
 def handle_surface_member(surface_member: dict) -> list[tuple[float]]:
@@ -56,6 +46,37 @@ def extract_roof_surface(surface: dict) -> list[tuple[float]]:
     return coords
 
 
+def parse_building_bounds(bounds: dict) -> list[float]:
+    building_coordinates = []
+    for surfaces in bounds:
+        for surface in surfaces.values():
+            building_coordinates.extend(extract_roof_surface(surface))
+
+    return building_coordinates
+
+
+def parse_building_data(building_data: dict) -> list[float]:
+    if "bldg:Building" not in building_data:
+        return []
+
+    building = building_data["bldg:Building"]
+
+    building_coordinates = []
+    if "bldg:boundedBy" in building:
+        bounded_by = [building["bldg:boundedBy"]]
+        for bounds in bounded_by:
+            building_coordinates.extend(parse_building_bounds(bounds))
+
+    if "bldg:consistsOfBuildingPart" in building:
+        building_parts = building["bldg:consistsOfBuildingPart"]
+        for part in building_parts:
+            building_part = part["bldg:BuildingPart"]
+            bounds = building_part["bldg:boundedBy"]
+            building_coordinates.extend(parse_building_bounds(bounds))
+
+    return building_coordinates
+
+
 def gml2geocollection(gml: str) -> list[tuple[float]]:
     data = xmltodict.parse(gml)
 
@@ -73,49 +94,25 @@ def gml2geocollection(gml: str) -> list[tuple[float]]:
         buildings = [buildings]
 
     for bdata in buildings:
-        if "bldg:Building" not in bdata:
-            continue
-
-        building = bdata["bldg:Building"]
-
-        if "bldg:boundedBy" not in building:
-            continue
-
-        bounded_by = building["bldg:boundedBy"]
-
-        for surfaces in bounded_by:
-            for surface in surfaces.values():
-                building_coordinates.extend(extract_roof_surface(surface))
+        building_coordinates.extend(parse_building_data(bdata))
 
     return building_coordinates
 
 
+@lru_cache(maxsize=128)
+def parse_citycml_lod2(filepath: str) -> list[float]:
+    if not filepath.endswith(".gml"):
+        return []
+
+    with open(filepath, "r", encoding="utf-8") as f:
+        data = f.read()
+        return gml2geocollection(data)
+
+
 def main() -> None:
-    # parser = argparse.ArgumentParser()
+    filepath = "data/bonn_lod2/LoD2_32_364_5621_1_NW.gml"
 
-    # parser.add_argument("--path", type=str, required=True, help="Path to GML files")
-    # parser.add_argument("--out", type=str, required=True, help="Output File")
-    # args = parser.parse_args()
-    args = DummyParser()
-    filepath: str = args.path
-    outpath: str = os.path.abspath(args.out)
-    dirpath: str = os.path.dirname(outpath)
-
-    if not os.path.exists(dirpath):
-        os.makedirs(dirpath)
-
-    file_coordinates = []
-    for file in tqdm(os.listdir(filepath)):
-        if not file.endswith(".gml"):
-            continue
-
-        with open(os.path.join(filepath, file), "r", encoding="utf-8") as f:
-            data = f.read()
-            file_coordinates.extend(gml2geocollection(data))
-
-    # write all coordinates to file
-    df = pd.DataFrame(file_coordinates)
-    df.to_csv(outpath, index=False, header=False)
+    coords = parse_citycml_lod2(filepath)
 
 
 if __name__ == "__main__":

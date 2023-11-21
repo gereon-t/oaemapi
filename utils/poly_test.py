@@ -1,4 +1,4 @@
-from app.core.neighborhood import BoundingBox, Neighborhood
+from app.neighborhood import BoundingBox, Neighborhood
 from matplotlib import pyplot as plt
 import geopandas as gpd
 

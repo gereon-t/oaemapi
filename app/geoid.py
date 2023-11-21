@@ -1,10 +1,11 @@
 from enum import Enum
 from functools import lru_cache
 
+import numpy as np
 from pandas import read_csv
 from pointset import PointSet
 from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
-import numpy as np
+
 from app.config import GEOID_EPSG, GEOID_FILE, logger
 
 

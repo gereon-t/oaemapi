@@ -1,4 +1,5 @@
 import logging
+
 import numpy as np
 
 OAEM_RES = np.deg2rad(1)
@@ -13,7 +14,9 @@ GEOID_EPSG = 4258
 GEOID_RES = 100
 
 EDGE_SOURCE = "FILE"  # "WFS" or "FILE"
-EDGE_FILE = "./data/bonn_lod2.csv"
+EDGE_DATA_PATH = "./app/data/bonn_lod2"
+EDGE_LOD = 2  # 1 or 2
+EDGE_EPSG = 25832
 
 WFS_EPSG = 25832
 WFS_URL = "https://www.wfs.nrw.de/geobasis/wfs_nw_3d-gebaeudemodell_lod1"
