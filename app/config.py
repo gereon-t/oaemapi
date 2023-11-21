@@ -14,7 +14,7 @@ GEOID_EPSG = 4258
 GEOID_RES = 100
 
 EDGE_SOURCE = "FILE"  # "WFS" or "FILE"
-EDGE_DATA_PATH = "./app/data/bonn_lod2"
+EDGE_DATA_PATH = "./data/bonn_lod1"
 EDGE_LOD = 2  # 1 or 2
 EDGE_EPSG = 25832
 
