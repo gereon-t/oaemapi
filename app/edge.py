@@ -76,7 +76,3 @@ class Edge:
         """
         distance = self._distance_at_azimuth(azimuth=azimuth)
         return np.arctan2(self.start[2] - self.pos[2], distance)
-
-
-def csv2edges(filepath: str) -> list[Edge]:
-    pass

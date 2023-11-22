@@ -1,15 +1,14 @@
 import time
 from dataclasses import dataclass, field
-from functools import lru_cache
 
 import numpy as np
 from intervaltree import Interval, IntervalTree
 from pointset import PointSet
 
-from app.config import GEOID_RES, N_RES, OAEM_RES, WFS_EPSG, logger
+from app.config import GEOID_RES, N_RES, OAEM_RES, ROUNDING_EPSG, logger
 from app.edge import Edge
+from app.edge_provider import EdgeProvider
 from app.geoid import Geoid
-from app.wfs import edge_list_from_wfs
 
 
 @dataclass
@@ -46,39 +45,47 @@ class Oaem:
         return np.interp(azimuth, self.azimuth, self.elevation)
 
 
-@lru_cache(maxsize=16384)
 def compute_oaem(
-    geoid: Geoid, pos_x: float, pos_y: float, pos_z: float, epsg: int
+    geoid: Geoid,
+    edge_provider: EdgeProvider,
+    pos_x: float,
+    pos_y: float,
+    pos_z: float,
+    epsg: int,
 ) -> Oaem:
     """
-    Computes an Obstruction Adaptive Elevation Model (OAEM) for a given position in space.
+    Computes an Obstruction Adaptive Elevation Model (OAEM) for a given position.
 
     Args:
-        pos_x (float): The x-coordinate of the position in the specified EPSG.
-        pos_y (float): The y-coordinate of the position in the specified EPSG.
-        pos_z (float): The z-coordinate of the position in the specified EPSG.
+        geoid (Geoid): The geoid object that provides the geoid height for a given position.
+        edge_provider (EdgeProvider): The edge provider object that provides the edges for a given position.
+        pos_x (float): The x-coordinate of the position.
+        pos_y (float): The y-coordinate of the position.
+        pos_z (float): The z-coordinate of the position.
         epsg (int): The EPSG code of the position.
 
     Returns:
         Oaem: An Obstruction Adaptive Elevation Model (OAEM) that stores the elevation data for the given position in space.
     """
+    query_time = time.time()
     pos = PointSet(
         xyz=np.array([pos_x, pos_y, pos_z]), epsg=epsg, init_local_transformer=False
-    ).to_epsg(WFS_EPSG)
-
-    pos.z -= geoid.interpolate(pos=pos.round_to(GEOID_RES))
-    logger.info(
-        "Position in APP EPSG (orthometric): [%.3f, %.3f, %.3f], EPSG: %i",
-        pos.x,
-        pos.y,
-        pos.z,
-        pos.epsg,
     )
-    logger.info("Geoid cache info: %s", str(geoid.interpolate.cache_info()))
+    pos.to_epsg(ROUNDING_EPSG)
+    pos.z -= geoid.interpolate(pos.round_to(GEOID_RES))
+    edge_list = edge_provider.get_edges(pos.round_to(N_RES))
+    oaem = oaem_from_edge_list(edge_list, pos)
+    response_time = time.time()
 
-    edge_list = edge_list_from_wfs(pos=pos.round_to(N_RES))
-    logger.info("Neighborhood cache info: %s", edge_list_from_wfs.cache_info())
-    return oaem_from_edge_list(edge_list=edge_list, pos=pos), True
+    logger.info(
+        "Computed OAEM for position [%.3f, %.3f, %.3f], EPSG: %i in %.3f ms",
+        pos_x,
+        pos_y,
+        pos_z,
+        epsg,
+        (response_time - query_time) * 1000,
+    )
+    return oaem
 
 
 def oaem_from_edge_list(edge_list: list[Edge], pos: PointSet) -> Oaem:
@@ -95,6 +102,7 @@ def oaem_from_edge_list(edge_list: list[Edge], pos: PointSet) -> Oaem:
     """
     if not edge_list:
         return Oaem(pos=pos)
+
     interval_tree = build_interval_tree(edge_list=edge_list, pos=pos.xyz.ravel())
     oaem_grid = np.arange(-np.pi, np.pi, OAEM_RES)
     oaem_temp = np.zeros((len(oaem_grid) + 1, 2), dtype=np.float64)

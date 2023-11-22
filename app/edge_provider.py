@@ -5,8 +5,13 @@ from typing import Protocol
 from pointset import PointSet
 
 from app.edge import Edge
-from app.gml import (GMLData, GMLFileList, gml_file_picker, parse_citycml_lod1,
-                     parse_citycml_lod2)
+from app.gml import (
+    GMLData,
+    GMLFileList,
+    gml_file_picker,
+    parse_citycml_lod1,
+    parse_citycml_lod2,
+)
 from app.wfs import edge_list_from_wfs
 
 logger = logging.getLogger("root")
@@ -34,6 +39,7 @@ class LocalEdgeProvider:
 
         return GMLData(coordinates=coords)
 
+    @lru_cache(maxsize=512)
     def get_edges(self, pos: PointSet) -> list[Edge]:
         pos.to_epsg(self.epsg)
         utm_zone = int(pos.crs.utm_zone[:-1])
@@ -51,5 +57,6 @@ class WFSEdgeProvider:
     def __init__(self) -> None:
         pass
 
+    @lru_cache(maxsize=512)
     def get_edges(self, pos: PointSet) -> list[Edge]:
         return edge_list_from_wfs(pos)

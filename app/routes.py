@@ -7,11 +7,10 @@ import plotly.graph_objects as go
 from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse
 from fastapi.templating import Jinja2Templates
-from pointset import PointSet
 
 from app.config import FAVICON_PATH, VERSION, logger
 from app.dependencies import edge_provider, geoid
-from app.oaem import Oaem, oaem_from_edge_list
+from app.oaem import Oaem, compute_oaem
 from app.suntrack import SunTrack
 
 router = APIRouter()
@@ -70,36 +69,15 @@ async def oaem_request(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> d
         epsg,
     )
 
-    query_time = time()
-    pos = PointSet(
-        xyz=np.array([pos_x, pos_y, pos_z]), epsg=epsg, init_local_transformer=False
-    )
-    pos.z -= geoid.interpolate(pos)
-    edge_list = edge_provider.get_edges(pos)
-    oaem = oaem_from_edge_list(edge_list, pos)
-    response_time = time()
+    oaem = compute_oaem(geoid, edge_provider, pos_x, pos_y, pos_z, epsg)
 
-    logger.info(
-        "Computed OAEM for position [%.3f, %.3f, %.3f], EPSG: %i in %.3f ms",
-        pos_x,
-        pos_y,
-        pos_z,
-        epsg,
-        (response_time - query_time) * 1000,
-    )
-
-    return {"data": oaem.az_el_str, "within_area": True}
+    return {"data": oaem.az_el_str}
 
 
 @router.get("/sunvis")
 async def sunvis(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> dict:
     query_time = time()
-    pos = PointSet(
-        xyz=np.array([pos_x, pos_y, pos_z]), epsg=epsg, init_local_transformer=False
-    )
-    pos.z -= geoid.interpolate(pos)
-    edge_list = edge_provider.get_edges(pos)
-    oaem = oaem_from_edge_list(edge_list, pos)
+    oaem = compute_oaem(geoid, edge_provider, pos_x, pos_y, pos_z, epsg)
     sun_track = SunTrack(pos=oaem.pos)
     sun_track.intersect_with_oaem(oaem)
     sun_az, sun_el = sun_track.current_sunpos
@@ -119,7 +97,6 @@ async def sunvis(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> dict:
         "visible": str(sun_visible),
         "since": str(sun_track.since),
         "until": str(sun_track.until),
-        "within_area": True,
     }
 
 
@@ -153,12 +130,7 @@ async def plot(
 
         A JSON string representation of the Plotly figure.
     """
-    pos = PointSet(
-        xyz=np.array([pos_x, pos_y, pos_z]), epsg=epsg, init_local_transformer=False
-    )
-    pos.z -= geoid.interpolate(pos)
-    edge_list = edge_provider.get_edges(pos)
-    oaem = oaem_from_edge_list(edge_list, pos)
+    oaem = compute_oaem(geoid, edge_provider, pos_x, pos_y, pos_z, epsg)
     sun_track = SunTrack(pos=oaem.pos)
     sun_track.intersect_with_oaem(oaem)
     sun_az, sun_el = sun_track.current_sunpos
