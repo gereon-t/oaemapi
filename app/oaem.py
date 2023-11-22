@@ -1,16 +1,14 @@
 import time
 from dataclasses import dataclass, field
-from functools import lru_cache
 
 import numpy as np
 from intervaltree import Interval, IntervalTree
 from pointset import PointSet
 
-from app.config import WFS_EPSG, GEOID_RES, N_RES, OAEM_RES, logger
-from app.core.edge import Edge
-from app.core.wfs import request_wfs_lod1
-from app.data import geoid, area_of_operation
-from shapely.geometry import Point
+from app.config import GEOID_RES, N_RES, OAEM_RES, ROUNDING_EPSG, logger
+from app.edge import Edge
+from app.edge_provider import EdgeProvider
+from app.geoid import Geoid
 
 
 @dataclass
@@ -47,45 +45,47 @@ class Oaem:
         return np.interp(azimuth, self.azimuth, self.elevation)
 
 
-@lru_cache(maxsize=16384)
 def compute_oaem(
-    pos_x: float, pos_y: float, pos_z: float, epsg: int
-) -> tuple[Oaem, bool]:
+    geoid: Geoid,
+    edge_provider: EdgeProvider,
+    pos_x: float,
+    pos_y: float,
+    pos_z: float,
+    epsg: int,
+) -> Oaem:
     """
-    Computes an Obstruction Adaptive Elevation Model (OAEM) for a given position in space.
+    Computes an Obstruction Adaptive Elevation Model (OAEM) for a given position.
 
     Args:
-        pos_x (float): The x-coordinate of the position in the specified EPSG.
-        pos_y (float): The y-coordinate of the position in the specified EPSG.
-        pos_z (float): The z-coordinate of the position in the specified EPSG.
+        geoid (Geoid): The geoid object that provides the geoid height for a given position.
+        edge_provider (EdgeProvider): The edge provider object that provides the edges for a given position.
+        pos_x (float): The x-coordinate of the position.
+        pos_y (float): The y-coordinate of the position.
+        pos_z (float): The z-coordinate of the position.
         epsg (int): The EPSG code of the position.
 
     Returns:
         Oaem: An Obstruction Adaptive Elevation Model (OAEM) that stores the elevation data for the given position in space.
-        bool: True if the position is inside the area of operation, False otherwise.
     """
+    query_time = time.time()
     pos = PointSet(
         xyz=np.array([pos_x, pos_y, pos_z]), epsg=epsg, init_local_transformer=False
-    ).to_epsg(WFS_EPSG)
-
-    if (
-        area_of_operation is not None
-        and not area_of_operation.geometry.contains(Point(pos.x, pos.y))[0]
-    ):
-        logger.warning(
-            f"Position [{pos.x:.3f}, {pos.y:.3f}, {pos.z:.3f}] is outside the area of operation."
-        )
-        return Oaem(), False
-
-    pos.z -= geoid.interpolate(pos=pos.round_to(GEOID_RES))
-    logger.info(
-        f"Position in APP EPSG (orthometric): [{pos.x:.3f}, {pos.y:.3f}, {pos.z:.3f}], EPSG: {pos.epsg}"
     )
-    logger.info(f"Geoid cache info: {geoid.interpolate.cache_info()}")
+    pos.to_epsg(ROUNDING_EPSG)
+    pos.z -= geoid.interpolate(pos.round_to(GEOID_RES))
+    edge_list = edge_provider.get_edges(pos.round_to(N_RES))
+    oaem = oaem_from_edge_list(edge_list, pos)
+    response_time = time.time()
 
-    edge_list = request_wfs_lod1(pos=pos.round_to(N_RES))
-    logger.info(f"Neighborhood cache info: {request_wfs_lod1.cache_info()}")
-    return oaem_from_edge_list(edge_list=edge_list, pos=pos), True
+    logger.info(
+        "Computed OAEM for position [%.3f, %.3f, %.3f], EPSG: %i in %.3f ms",
+        pos_x,
+        pos_y,
+        pos_z,
+        epsg,
+        (response_time - query_time) * 1000,
+    )
+    return oaem
 
 
 def oaem_from_edge_list(edge_list: list[Edge], pos: PointSet) -> Oaem:
@@ -101,7 +101,8 @@ def oaem_from_edge_list(edge_list: list[Edge], pos: PointSet) -> Oaem:
         Oaem: An Obstruction Adaptive Elevation Model (OAEM) that stores the elevation data for the given position in space.
     """
     if not edge_list:
-        return Oaem()
+        return Oaem(pos=pos)
+
     interval_tree = build_interval_tree(edge_list=edge_list, pos=pos.xyz.ravel())
     oaem_grid = np.arange(-np.pi, np.pi, OAEM_RES)
     oaem_temp = np.zeros((len(oaem_grid) + 1, 2), dtype=np.float64)
@@ -161,6 +162,8 @@ def build_interval_tree(edge_list: list[Edge], pos: np.ndarray) -> IntervalTree:
             )
 
     logger.debug(
-        f"Building interval tree with {len(interval_tree)} intervals took {time.time() - start_time} seconds"
+        "Building interval tree with %i intervals took %.3f seconds",
+        len(interval_tree),
+        time.time() - start_time,
     )
     return interval_tree

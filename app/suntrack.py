@@ -1,11 +1,12 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+
 import numpy as np
 import pandas as pd
 from pointset import PointSet
 from pvlib import solarposition
 
-from app.core.oaem import Oaem
+from app.oaem import Oaem
 
 
 @dataclass
@@ -18,16 +19,18 @@ class SunTrack:
 
     def get_sun_track(
         self,
-        start_date: datetime,
-        end_date: datetime,
+        date: datetime,
         freq: timedelta = timedelta(minutes=1),
         daylight_only: bool = False,
     ) -> np.ndarray:
+        start_time = datetime.combine(date, datetime.min.time())
+        end_time = datetime.combine(date, datetime.max.time())
+
         times = pd.date_range(
-            start_date,
-            end_date,
+            start_time,
+            end_time,
             freq=freq,
-            tz=start_date.tzinfo,
+            tz=date.tzinfo,
         )
 
         solpos = solarposition.get_solarposition(
@@ -49,13 +52,13 @@ class SunTrack:
         solpos = solarposition.get_solarposition(
             time=date, latitude=self.pos.x, longitude=self.pos.y, altitude=self.pos.z
         )
-        return float(np.deg2rad(solpos["azimuth"].iloc[0])), float(np.deg2rad(solpos["apparent_elevation"].iloc[0]))
+        return float(np.deg2rad(solpos["azimuth"].iloc[0])), float(
+            np.deg2rad(solpos["apparent_elevation"].iloc[0])
+        )
 
     def intersect_with_oaem(self, oaem: Oaem) -> None:
         date = datetime.now().astimezone()
-        start_date = datetime.combine(date, datetime.min.time())
-        end_date = datetime.combine(date + timedelta(days=1), datetime.max.time())
-        sun_track = self.get_sun_track(start_date=start_date, end_date=end_date)
+        sun_track = self.get_sun_track(date=date)
         oaem_query_func = np.vectorize(oaem.query)
         oaem_elevations = oaem_query_func(sun_track[:, 1])
 

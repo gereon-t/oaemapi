@@ -10,14 +10,6 @@ function convertUnixTimestamp(unixTimestamp) {
 }
 
 function handle_plot_response(response) {
-    let within_area = JSON.parse(response.within_area);
-
-    if (within_area === false) {
-        document.getElementById('position').style.color = 'red';
-        document.getElementById('position').textContent = `Current Position: ${latitude}°, ${longitude}°, ${height} m\n is outside of the coverage area.`;
-    } else {
-        document.getElementById('position').style.color = 'black';
-    }
     const sunVisibilityText = `Sun Visibility: ${response.visible}`;
     const sunSinceText = `Since: ${convertUnixTimestamp(response.since)}`;
     const sunUntilText = `Until: ${convertUnixTimestamp(response.until)}`;
