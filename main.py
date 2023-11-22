@@ -1,8 +1,9 @@
+import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+
 from app import routes
 from app.config import VERSION
-import uvicorn
 
 app = FastAPI(
     title="OAEM-API",

@@ -5,13 +5,7 @@ from typing import Protocol
 from pointset import PointSet
 
 from app.edge import Edge
-from app.gml import (
-    GMLData,
-    GMLFileList,
-    gml_file_picker,
-    parse_citycml_lod1,
-    parse_citycml_lod2,
-)
+from app.gml import GMLData, GMLFileList, gml_file_picker, parse_citycml_lod1, parse_citycml_lod2
 from app.wfs import edge_list_from_wfs
 
 logger = logging.getLogger("root")

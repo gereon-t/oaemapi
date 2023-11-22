@@ -1,7 +1,6 @@
 import logging
 
-from app.config import (EDGE_DATA_PATH, EDGE_EPSG, EDGE_LOD, EDGE_SOURCE,
-                        GEOID_EPSG, GEOID_FILE)
+from app.config import EDGE_DATA_PATH, EDGE_EPSG, EDGE_LOD, EDGE_SOURCE, GEOID_EPSG, GEOID_FILE
 from app.edge_provider import LocalEdgeProvider, WFSEdgeProvider
 from app.geoid import Geoid
 
