@@ -54,3 +54,6 @@ trajeval/
 oaemapi.log
 build/
 .vscode/
+test*
+app/templates/privacy_policy.html
+test.py

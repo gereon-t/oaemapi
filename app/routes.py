@@ -1,88 +1,225 @@
+from datetime import datetime
 from time import time
+from typing import Any
 
 import numpy as np
 import plotly.graph_objects as go
-from fastapi import Request
-from pointset import PointSet
+from fastapi import Request, APIRouter
 
-from app import app, geoid, templates
-from app.config import GEOID_RES, VERSION, POS_RES, logger
-from app.core.oaem import Oaem, oaem_from_pointset
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import FileResponse
+from app.config import FAVICON_PATH, VERSION, logger
+from app.core.oaem import Oaem, compute_oaem
+from app.core.sunspan import SunTrack
 
-
-def oaem_ellipsoidal_height(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> Oaem:
-    pos = PointSet(xyz=np.array([pos_x, pos_y, pos_z]), epsg=epsg, init_local_transformer=False)
-    pos.z -= geoid.interpolate(pos=pos.round_to(GEOID_RES))
-    oaem = oaem_from_pointset(pos=pos.round_to(POS_RES))
-
-    logger.debug(f"Geoid cache info: {geoid.interpolate.cache_info()}")
-    logger.debug(f"Position cache info: {oaem_from_pointset.cache_info()}")
-    return oaem
+router = APIRouter()
+templates = Jinja2Templates(directory="app/templates")
 
 
-@app.get("/")
+@router.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse(FAVICON_PATH)
+
+
+@router.get("/", include_in_schema=False)
 async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(
+        "index.html", {"request": request, "version": VERSION}
+    )
 
 
-@app.get("/api")
-async def oaem_request(pos_x: float, pos_y: float, pos_z: float, epsg: int):
-    logger.info(f"Received API request for position [{pos_x:.3f}, {pos_y:.3f}, {pos_z:.3f}], EPSG: {epsg}")
+@router.get("/privacy_policy", include_in_schema=False)
+async def privacy_policy(request: Request):
+    return templates.TemplateResponse("privacy_policy.html", {"request": request})
+
+
+@router.get("/api")
+async def oaem_request(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> dict:
+    """
+    Computes the Obstruction Adaptive Elevation Mask (OAEM) for a given position and EPSG code.
+
+    This API endpoint calculates the OAEM, which represents the obstruction of the sky view due to
+    buildings using elevation angles. The OAEM is given with an azimuth resolution of 1 degree.
+
+    Note: The OAEM data provided by this API is currently available only for the state of North Rhine-Westphalia (NRW), Germany.
+    If the provided position is outside the area of operation, an empty OAEM is returned.
+
+    Args:
+
+        pos_x (float): The x-coordinate of the position.
+        pos_y (float): The y-coordinate of the position.
+        pos_z (float): The z-coordinate of the position.
+        epsg (int): The EPSG code specifying the coordinate reference system (CRS) of the provided position.
+
+    Returns:
+
+        A JSON object with:
+
+            - data (str): The OAEM data represented as a string in azimuth:elevation format.
+                          If the position is outside the area of operation, the OAEM will be empty.
+                          Azimuth and elevation are given in radians.
+            - within_area (bool): A boolean indicating whether the provided position is within the area of operation.
+    """
+    logger.info(
+        f"Received API request for position [{pos_x:.3f}, {pos_y:.3f}, {pos_z:.3f}], EPSG: {epsg}"
+    )
+
     query_time = time()
-
-    oaem = oaem_ellipsoidal_height(pos_x, pos_y, pos_z, epsg)
+    oaem, within_area = compute_oaem(pos_x=pos_x, pos_y=pos_y, pos_z=pos_z, epsg=epsg)
     oaem_str = str(oaem.az_el_str)
-
     response_time = time()
-    logger.debug(
+
+    logger.info(f"Position cache info: {compute_oaem.cache_info()}")
+    logger.info(
         f"Computed OAEM for position [{pos_x:.3f}, {pos_y:.3f}, {pos_z:.3f}], EPSG: {epsg} in {(response_time-query_time)*1000:.3f} ms"
     )
-    return {"Data": oaem_str}
+    logger.info(f"Position cache info: {compute_oaem.cache_info()}")
+
+    return {"data": oaem_str, "within_area": within_area}
 
 
-@app.get("/plot")
-async def plot(
-    pos_x: float, pos_y: float, pos_z: float, epsg: int, width: int = 600, height: int = 600, heading: float = 0.0
-):
+@router.get("/sunvis")
+async def sunvis(pos_x: float, pos_y: float, pos_z: float, epsg: int) -> dict:
+    query_time = time()
+    oaem, within_area = compute_oaem(pos_x=pos_x, pos_y=pos_y, pos_z=pos_z, epsg=epsg)
+    sun_track = SunTrack(pos=oaem.pos)
+    sun_track.intersect_with_oaem(oaem)
+    sun_az, sun_el = sun_track.current_sunpos
+    sun_visible = sun_el > oaem.query(sun_az)
+    response_time = time()
+
     logger.info(
-        f"Received plot request for position [{pos_x:.3f}, {pos_y:.3f}, {pos_z:.3f}], EPSG: {epsg}, heading: {heading:.3f} deg"
+        f"Computed sun visibility for position [{pos_x:.3f}, {pos_y:.3f}, {pos_z:.3f}], EPSG: {epsg} in {(response_time-query_time)*1000:.3f} ms"
     )
-    oaem = oaem_ellipsoidal_height(pos_x, pos_y, pos_z, epsg)
-    fig = go.Figure(
-        data=go.Scatterpolar(
+    logger.info(f"Position cache info: {compute_oaem.cache_info()}")
+
+    return {
+        "visible": str(sun_visible),
+        "since": str(sun_track.since),
+        "until": str(sun_track.until),
+        "within_area": within_area,
+    }
+
+
+@router.get("/plot")
+async def plot(
+    pos_x: float,
+    pos_y: float,
+    pos_z: float,
+    epsg: int,
+    width: int = 600,
+    height: int = 600,
+    heading: float = 0.0,
+):
+    """
+    Computes the Obstruction Adaptive Elevation Mask (OAEM) for a given position and EPSG code, and returns a plot of the OAEM.
+
+    Due to the unavailability of data for other federal states, the OAEM is currently only available for
+    the state of North Rhine-Westphalia (NRW), Germany.
+
+    Args:
+
+        pos_x (float): The x-coordinate of the position.
+        pos_y (float): The y-coordinate of the position.
+        pos_z (float): The z-coordinate of the position.
+        epsg (int): The EPSG code of the position.
+        width (int, optional): The width of the plot in pixels. Defaults to 600.
+        height (int, optional): The height of the plot in pixels. Defaults to 600.
+        heading (float, optional): The heading of the plot in degrees. Defaults to 0.0.
+
+    Returns:
+
+        A JSON string representation of the Plotly figure.
+    """
+    oaem, within_area = compute_oaem(pos_x=pos_x, pos_y=pos_y, pos_z=pos_z, epsg=epsg)
+    sun_track = SunTrack(pos=oaem.pos)
+    sun_track.intersect_with_oaem(oaem)
+    sun_az, sun_el = sun_track.current_sunpos
+    sun_visible = sun_el > oaem.query(sun_az)
+
+    logger.info(f"Position cache info: {compute_oaem.cache_info()}")
+    fig_json = create_json_fig(width, height, heading, oaem, sun_track)
+
+    return {
+        "data": fig_json,
+        "within_area": within_area,
+        "visible": str(sun_visible),
+        "since": str(sun_track.since),
+        "until": str(sun_track.until),
+        "within_area": within_area,
+    }
+
+
+def create_json_fig(
+    width: int, height: int, heading: float, oaem: Oaem, sun_track: SunTrack
+) -> str | None | Any:
+    """
+    Creates a Plotly scatterpolar figure of the Obstruction Adaptive Elevation Mask (OAEM) for a given position and EPSG code.
+
+    Args:
+        width (int): The width of the plot in pixels.
+        height (int): The height of the plot in pixels.
+        heading (float): The heading of the plot in degrees.
+        oaem (Oaem): The OAEM object containing the azimuth and elevation data.
+
+    Returns:
+        str: A JSON string representation of the Plotly figure.
+    """
+    date = datetime.now().astimezone()
+    start_date = datetime.combine(date, datetime.min.time())
+    end_date = datetime.combine(date, datetime.max.time())
+    today_sun_track = sun_track.get_sun_track(
+        start_date=start_date, end_date=end_date, daylight_only=True
+    )
+    fig = go.Figure()
+
+    fig.add_trace(
+        trace=go.Scatterpolar(
             theta=np.rad2deg(oaem.azimuth),
             r=np.rad2deg(np.pi / 2 - oaem.elevation),
-            mode="lines",
-            text="Obstruction Adaptive Elevation Mask",
-        ),
-        layout=go.Layout(
-            title={
-                "text": f"Obstruction Adaptive Elevation Mask API {VERSION}",
-                "x": 0.5,
-                "y": 1,
-                "xanchor": "center",
-                "yanchor": "top",
-                "font": {
-                    "family": "Arial",
-                    "size": 40,
-                    "color": "black",
-                },
-            },
-            polar=dict(
-                angularaxis=dict(direction="clockwise", rotation=90 + heading),
-                radialaxis=dict(
-                    angle=90,
-                    tickmode="array",
-                    tickvals=[0, 15, 30, 45, 60, 75, 90],
-                    ticktext=["90", "75", "60", "45", "30", "15", "0"],
-                    tickangle=90,
-                ),
-            ),
-            width=width,
-            height=height,
-            font=dict(size=30),
+            fill="toself",
+            fillcolor="#96d0ff",
+            name="Obstruction Adaptive Elevation Mask",
         ),
     )
-    fig_json = fig.to_json()
 
-    return {"plot": fig_json}
+    fig.add_trace(
+        trace=go.Scatterpolar(
+            theta=np.rad2deg(today_sun_track[:, 1]),
+            r=np.rad2deg(np.pi / 2 - today_sun_track[:, 2]),
+            name="Sun Trajectory",
+            line_color="black",
+        ),
+    )
+    current_sun_az, current_sun_el = sun_track.current_sunpos
+    if current_sun_el > 0:
+        fig.add_trace(
+            trace=go.Scatterpolar(
+                theta=[np.rad2deg(current_sun_az)],
+                r=[np.rad2deg(np.pi / 2 - current_sun_el)],
+                name="Sun Position",
+                mode="markers",
+                marker=dict(size=40, color="gold"),
+            ),
+        )
+
+    fig.update_layout(
+        polar=dict(
+            angularaxis=dict(direction="clockwise", rotation=90 + heading),
+            radialaxis=dict(
+                angle=90,
+                tickmode="array",
+                tickvals=[0, 15, 30, 45, 60, 75],
+                ticktext=["90°", "75°", "60°", "45°", "30°", "15°"],
+                tickangle=90,
+            ),
+            bgcolor="#c2c2c2",
+        ),
+        width=width,
+        height=height,
+        font=dict(size=30),
+        showlegend=False,
+        paper_bgcolor="#e5ecf6",
+        plot_bgcolor="#fff",
+    )
+    return fig.to_json()

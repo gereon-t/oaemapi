@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Tombrink
+    given-names: Gereon
+    orcid: https://orcid.org/0009-0005-3240-1006
+title: "Obstruction Adaptive Elevation Mask API"
+version: 0.2.2
+date-released: 2023-06-11
+doi: 10.5281/zenodo.8025059
+url: "https://github.com/gereon-t/oaemapi"

@@ -3,60 +3,31 @@
 
 <head>
     <title>OAEM-API</title>
+    <link rel="stylesheet" href="static/styles.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 
 <body>
+    <header>
+        <h1 class="title">Obstruction Adaptive Elevation Mask API</h1>
+    </header>
+
+    <div class="container">
+        <h3 class="position" id="position">Current Position: Waiting For Geolocation Data...</h3>
+        <h4 id="sun"></h4>
+    </div>
+
     <div id="plot"></div>
 
-    <script>
-        // Fetch the plot data using AJAX
-        function request_oaem(position) {
-            const latitude = position.coords.latitude;
-            const longitude = position.coords.longitude;
-            let height = position.coords.altitude;
-            let heading = position.coords.heading;
+    <footer>
+        <p class="footer-text"><a href="/privacy_policy">Datenschutzerklärung</a> • <a
+                href="https://github.com/gereon-t/oaemapi">Code</a> •
+            Version {{ version }}
+        </p>
+    </footer>
 
-            const winwidth = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth) - 20;
-            const winheight = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight) - 20;
-
-            if (height === null) {
-                height = 0;
-            }
-
-            if (heading === null) {
-                heading = 0;
-            }
-
-            console.info(`Position: ${latitude}, ${longitude}, ${height}`);
-
-            $.ajax({
-                url: `/plot?pos_x=${latitude}&pos_y=${longitude}&pos_z=${height}&epsg=4326&width=${winwidth}&height=${winheight}&heading=${heading}`,
-                type: "GET",
-                dataType: "json",
-                success: function (response) {
-                    var fig = JSON.parse(response.plot);
-                    Plotly.newPlot("plot", fig.data, fig.layout);
-                }
-            });
-        }
-
-        function handle_error(error) {
-            console.error('Error getting position:', error);
-        }
-
-        function updatePlot() {
-            // Request user's position using Geolocation API
-            navigator.geolocation.getCurrentPosition(
-                request_oaem,
-                handle_error
-            );
-        }
-
-        // Update the polar plot every second
-        setInterval(updatePlot, 1000);
-    </script>
+    <script src="static/request_oaem.js"></script>
 </body>
 
 </html>
