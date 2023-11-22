@@ -10,9 +10,7 @@ from tqdm import tqdm
 
 def main():
     # positions
-    pos_file = pd.read_csv(
-        "./data/M2RoverPhase.pos", delim_whitespace=True, skiprows=list(range(1000))
-    )
+    pos_file = pd.read_csv("./data/M2RoverPhase.pos", delim_whitespace=True, skiprows=list(range(1000)))
 
     traj = PointSet(
         xyz=pos_file.iloc[:, 2:5].to_numpy(),
@@ -43,16 +41,12 @@ def main():
         local_oaem_lod2 = oaem_from_edge_list(local_edge_list_lod2, pos)
         wfs_oaem = oaem_from_edge_list(wfs_edge_list, pos)
 
-        ax_local_lod1.plot(
-            local_oaem_lod1.azimuth, np.pi / 2 - local_oaem_lod1.elevation
-        )
+        ax_local_lod1.plot(local_oaem_lod1.azimuth, np.pi / 2 - local_oaem_lod1.elevation)
         ax_local_lod1.set_theta_zero_location("N")
         ax_local_lod1.set_theta_direction(-1)
         ax_local_lod1.set_title("Local LOD1")
 
-        ax_local_lod2.plot(
-            local_oaem_lod2.azimuth, np.pi / 2 - local_oaem_lod2.elevation
-        )
+        ax_local_lod2.plot(local_oaem_lod2.azimuth, np.pi / 2 - local_oaem_lod2.elevation)
         ax_local_lod2.set_theta_zero_location("N")
         ax_local_lod2.set_theta_direction(-1)
         ax_local_lod2.set_title("Local LOD2")

@@ -9,6 +9,7 @@ keywords = ["sky obstruction", "elevation mask", "obstruction adaptive", "OAEM",
 readme = "README.md"
 homepage = "https://github.com/gereon-t/oaemapi"
 repository = "https://github.com/gereon-t/oaemapi.git"
+packages = [{ include = "app"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
