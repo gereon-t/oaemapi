@@ -58,3 +58,4 @@ test*
 app/templates/privacy_policy.html
 test.py
 %Code*
+oaem-export

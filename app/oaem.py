@@ -19,12 +19,8 @@ class Oaem:
     """
 
     pos: PointSet
-    azimuth: np.ndarray = field(
-        default_factory=lambda: np.arange(-np.pi, np.pi, OAEM_RES)
-    )
-    elevation: np.ndarray = field(
-        default_factory=lambda: np.zeros_like(np.arange(0, 2 * np.pi, OAEM_RES))
-    )
+    azimuth: np.ndarray = field(default_factory=lambda: np.arange(-np.pi, np.pi, OAEM_RES))
+    elevation: np.ndarray = field(default_factory=lambda: np.zeros_like(np.arange(0, 2 * np.pi, OAEM_RES)))
     res: float = OAEM_RES
 
     def __post_init__(self) -> None:
@@ -34,9 +30,7 @@ class Oaem:
 
     @property
     def az_el_str(self) -> str:
-        return "".join(
-            f"{az:.3f}:{el:.3f}," for az, el in zip(self.azimuth, self.elevation)
-        )
+        return "".join(f"{az:.3f}:{el:.3f}," for az, el in zip(self.azimuth, self.elevation))
 
     def query(self, azimuth: float) -> np.ndarray:
         if azimuth > np.pi:
@@ -68,16 +62,14 @@ def compute_oaem(
         Oaem: An Obstruction Adaptive Elevation Model (OAEM) that stores the elevation data for the given position in space.
     """
     query_time = time.time()
-    pos = PointSet(
-        xyz=np.array([pos_x, pos_y, pos_z]), epsg=epsg, init_local_transformer=False
-    )
+    pos = PointSet(xyz=np.array([pos_x, pos_y, pos_z]), epsg=epsg, init_local_transformer=False)
     pos.to_epsg(ROUNDING_EPSG)
     pos.z -= geoid.interpolate(pos.round_to(GEOID_RES))
     edge_list = edge_provider.get_edges(pos.round_to(N_RES))
     oaem = oaem_from_edge_list(edge_list, pos)
     response_time = time.time()
 
-    logger.info(
+    logger.debug(
         "Computed OAEM for position [%.3f, %.3f, %.3f], EPSG: %i in %.3f ms",
         pos_x,
         pos_y,
@@ -105,7 +97,7 @@ def oaem_from_edge_list(edge_list: list[Edge], pos: PointSet) -> Oaem:
 
     interval_tree = build_interval_tree(edge_list=edge_list, pos=pos.xyz.ravel())
     oaem_grid = np.arange(-np.pi, np.pi, OAEM_RES)
-    oaem_temp = np.zeros((len(oaem_grid) + 1, 2), dtype=np.float64)
+    oaem_temp = np.zeros((len(oaem_grid), 2), dtype=np.float64)
 
     for i, az in enumerate(oaem_grid):
         overlaps: set[Interval] = interval_tree[az]
@@ -117,7 +109,6 @@ def oaem_from_edge_list(edge_list: list[Edge], pos: PointSet) -> Oaem:
                 default=0,
             ),
         )
-    oaem_temp[-1, :] = oaem_temp[0, :]
     return Oaem(pos=pos, azimuth=oaem_temp[:, 0], elevation=oaem_temp[:, 1])
 
 
@@ -133,9 +124,7 @@ def build_interval_tree(edge_list: list[Edge], pos: np.ndarray) -> IntervalTree:
         IntervalTree: An interval tree that stores the intervals of azimuth angles that intersect with the edges.
     """
 
-    def add_to_interval_tree(
-        interval_tree: IntervalTree, start: float, end: float, data: float
-    ) -> None:
+    def add_to_interval_tree(interval_tree: IntervalTree, start: float, end: float, data: float) -> None:
         if start == end:
             return
         interval_tree.addi(start, end, data)
@@ -147,12 +136,8 @@ def build_interval_tree(edge_list: list[Edge], pos: np.ndarray) -> IntervalTree:
         az_1 = np.arctan2(edge.start[0] - pos[0], edge.start[1] - pos[1])
         az_2 = np.arctan2(edge.end[0] - pos[0], edge.end[1] - pos[1])
         if np.sign(az_1) != np.sign(az_2) and np.abs(az_1 - az_2) > np.pi:
-            add_to_interval_tree(
-                interval_tree=interval_tree, start=-np.pi, end=min(az_1, az_2), data=i
-            )
-            add_to_interval_tree(
-                interval_tree=interval_tree, start=max(az_1, az_2), end=np.pi, data=i
-            )
+            add_to_interval_tree(interval_tree=interval_tree, start=-np.pi, end=min(az_1, az_2), data=i)
+            add_to_interval_tree(interval_tree=interval_tree, start=max(az_1, az_2), end=np.pi, data=i)
         else:
             add_to_interval_tree(
                 interval_tree=interval_tree,
