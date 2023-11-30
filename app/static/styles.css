@@ -20,12 +20,22 @@ header {
 }
 
 .container {
-    text-align: center;
-    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 20px 0px 20px;
+    border: 2px solid #c8c8c8;
+    border-radius: 10px;
 }
 
 .position {
-    font-size: 18px;
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+.sun {
+    font-size: 24px;
     margin-bottom: 10px;
 }
 
