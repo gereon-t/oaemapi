@@ -16,7 +16,7 @@ GEOID_EPSG = 4258
 GEOID_RES = 100
 
 EDGE_SOURCE = "FILE"  # "WFS" or "FILE"
-EDGE_DATA_PATH = "./data/bonn_lod2"
+EDGE_DATA_PATH = "./gmldata"
 EDGE_LOD = 2  # 1 or 2
 EDGE_EPSG = 25832
 
@@ -24,7 +24,7 @@ WFS_EPSG = 25832
 WFS_URL = "https://www.wfs.nrw.de/geobasis/wfs_nw_3d-gebaeudemodell_lod1"
 WFS_BASE_REQUEST = "Service=WFS&REQUEST=GetFeature&VERSION=1.1.0&TYPENAME=bldg:Building"
 
-APP_HOST = "0.0.0.0"
+APP_HOST = "127.0.0.1"
 APP_PORT = 8000
 logging.basicConfig(
     format="%(levelname)-8s %(asctime)s.%(msecs)03d - %(message)s",

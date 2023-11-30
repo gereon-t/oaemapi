@@ -1,7 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from app.config import VERSION
+from config import VERSION, APP_HOST, APP_PORT
 from app.routes import router
 
 app = FastAPI(
@@ -13,4 +13,4 @@ app.mount("/static", StaticFiles(directory="./app/static"), name="static")
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host=APP_HOST, port=APP_PORT)

@@ -4,9 +4,9 @@ import numpy as np
 import requests
 from pointset import PointSet
 
-from app.config import N_RANGE, WFS_BASE_REQUEST, WFS_EPSG, WFS_URL, logger
 from app.edge import Edge
 from app.gml import extract_lod1_coords
+from config import N_RANGE, WFS_BASE_REQUEST, WFS_EPSG, WFS_URL, logger
 
 
 @lru_cache(maxsize=1024)

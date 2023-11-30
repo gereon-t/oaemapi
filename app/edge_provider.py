@@ -5,12 +5,10 @@ from typing import Protocol
 from pointset import PointSet
 
 from app.edge import Edge
-from app.gml import GMLData, GMLFileList, gml_file_picker, parse_citycml_lod1, parse_citycml_lod2
+from app.gml import GMLData, GMLFileList, gml_file_picker, parse_citygml
 from app.wfs import edge_list_from_wfs
 
 logger = logging.getLogger("root")
-
-LOD_PARSER = {1: parse_citycml_lod1, 2: parse_citycml_lod2}
 
 
 class EdgeProvider(Protocol):
@@ -49,7 +47,7 @@ class LocalEdgeProvider:
         coords: list[list[float]] = []
 
         for file in filepaths.files:
-            coords.extend(LOD_PARSER[self.lod](file))
+            coords.extend(parse_citygml(file, self.lod))
 
         return GMLData(coordinates=coords)
 

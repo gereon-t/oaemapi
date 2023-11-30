@@ -5,7 +5,7 @@ from pandas import read_csv
 from pointset import PointSet
 from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
 
-from app.config import GEOID_EPSG, GEOID_FILE, logger
+from config import GEOID_EPSG, GEOID_FILE, logger
 
 
 class InvalidInterpolatorError(Exception):

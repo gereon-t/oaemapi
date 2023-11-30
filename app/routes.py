@@ -4,10 +4,10 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import FileResponse
 from fastapi.templating import Jinja2Templates
 
-from app.config import FAVICON_PATH, VERSION
 from app.oaem import Oaem, compute_oaem
 from app.plotting import create_json_fig
 from app.suntrack import SunTrack
+from config import FAVICON_PATH, VERSION
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")

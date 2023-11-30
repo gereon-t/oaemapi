@@ -1,14 +1,7 @@
-from .config import (
-    logger,
-    EDGE_DATA_PATH,
-    EDGE_EPSG,
-    EDGE_LOD,
-    EDGE_SOURCE,
-    GEOID_EPSG,
-    GEOID_FILE,
-)
-from .geoid import Geoid
+from config import EDGE_DATA_PATH, EDGE_EPSG, EDGE_LOD, EDGE_SOURCE, GEOID_EPSG, GEOID_FILE, logger
+
 from .edge_provider import LocalEdgeProvider, WFSEdgeProvider
+from .geoid import Geoid
 
 geoid = Geoid(filename=GEOID_FILE, epsg=GEOID_EPSG)
 

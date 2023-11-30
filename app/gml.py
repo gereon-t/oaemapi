@@ -7,8 +7,8 @@ import numpy as np
 import xmltodict
 from scipy.spatial import KDTree
 
-from app.config import N_RANGE
 from app.edge import Edge
+from config import N_RANGE, logger
 
 CoordinateList: TypeAlias = list[list[float]]
 
@@ -80,6 +80,8 @@ def gml_file_picker(data_path: str, pos: list[float], utm_zone: int = 32, lod: i
 
     if (pos[1] - y_val * 1000) > (1000 - N_RANGE):
         file_list.add(f"LoD{lod}_{utm_zone}_{x_val}_{y_val+1}_1_NW.gml")
+
+    logger.info("Using gml files: %s", file_list.files)
 
     return file_list
 
@@ -234,32 +236,26 @@ def parse_lod1solid(lod1solid: dict) -> CoordinateList:
 
 
 @lru_cache(maxsize=128)
-def parse_citycml_lod2(filepath: str) -> CoordinateList:
+def parse_citygml(filepath: str, lod: int = 2) -> CoordinateList:
     if not filepath.endswith(".gml"):
+        return []
+
+    if not os.path.isfile(filepath):
+        logger.error("File %s does not exist", filepath)
         return []
 
     with open(filepath, "r", encoding="utf-8") as f:
         data = f.read()
-        return extract_lod2_coords(data)
-
-
-@lru_cache(maxsize=128)
-def parse_citycml_lod1(filepath: str) -> CoordinateList:
-    if not filepath.endswith(".gml"):
-        return []
-
-    with open(filepath, "r", encoding="utf-8") as f:
-        data = f.read()
-        return extract_lod1_coords(data)
+        return extract_lod2_coords(data) if lod == 2 else extract_lod1_coords(data)
 
 
 def main() -> None:
-    data_path = "data/bonn_lod1/"
-    file_list = gml_file_picker(data_path=data_path, pos=[364937.1665, 5621232.2154, 107.9581], lod=1)
+    data_path = "gmldata"
+    file_list = gml_file_picker(data_path=data_path, pos=[364937.1665, 5621232.2154, 107.9581], lod=2)
     coords = []
 
     for file in file_list.files:
-        coords.extend(parse_citycml_lod1(file))
+        coords.extend(parse_citygml(file, lod=1))
 
     print(f"Read {len(coords)} coordinates from {file_list.files}")
 

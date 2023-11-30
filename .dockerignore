@@ -1,0 +1,8 @@
+gmldata
+images
+.venv
+.vscode
+Dockerfile
+docker-compose.yml
+__pycache__
+CITATION.cff

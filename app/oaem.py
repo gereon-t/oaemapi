@@ -4,16 +4,10 @@ from dataclasses import dataclass, field
 import numpy as np
 from intervaltree import Interval, IntervalTree
 from pointset import PointSet
-from app.dependencies import edge_provider, geoid
 
-from app.config import (
-    GEOID_RES,
-    N_RES,
-    OAEM_RES,
-    ROUNDING_EPSG,
-    logger,
-)
+from app.dependencies import edge_provider, geoid
 from app.edge import Edge
+from config import GEOID_RES, N_RES, OAEM_RES, ROUNDING_EPSG, logger
 
 
 @dataclass

@@ -1,0 +1,11 @@
+services:
+  oaemapi:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./gmldata:/app/gmldata
+      - ./config.py:/app/config.py
+
+volumes:
+  gmldata:

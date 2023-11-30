@@ -1,7 +1,9 @@
-from typing import Any
-import numpy as np
 from datetime import datetime
+from typing import Any
+
+import numpy as np
 import plotly.graph_objects as go
+
 from app.oaem import Oaem
 from app.suntrack import SunTrack
 
