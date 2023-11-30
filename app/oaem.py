@@ -4,11 +4,16 @@ from dataclasses import dataclass, field
 import numpy as np
 from intervaltree import Interval, IntervalTree
 from pointset import PointSet
+from app.dependencies import edge_provider, geoid
 
-from app.config import GEOID_RES, N_RES, OAEM_RES, ROUNDING_EPSG, logger
+from app.config import (
+    GEOID_RES,
+    N_RES,
+    OAEM_RES,
+    ROUNDING_EPSG,
+    logger,
+)
 from app.edge import Edge
-from app.edge_provider import EdgeProvider
-from app.geoid import Geoid
 
 
 @dataclass
@@ -30,18 +35,28 @@ class Oaem:
 
     @property
     def az_el_str(self) -> str:
+        """
+        Returns the OAEM data as a string in azimuth:elevation format.
+        """
         return "".join(f"{az:.3f}:{el:.3f}," for az, el in zip(self.azimuth, self.elevation))
 
-    def query(self, azimuth: float) -> np.ndarray:
+    def query(self, azimuth: float) -> float:
+        """
+        Interpolates the elevation for a given azimuth angle.
+
+        Args:
+            azimuth (float): The azimuth angle in radians.
+
+        Returns:
+            float: The elevation in radians.
+        """
         if azimuth > np.pi:
             azimuth -= 2 * np.pi
 
-        return np.interp(azimuth, self.azimuth, self.elevation)
+        return float(np.interp(azimuth, self.azimuth, self.elevation))
 
 
 def compute_oaem(
-    geoid: Geoid,
-    edge_provider: EdgeProvider,
     pos_x: float,
     pos_y: float,
     pos_z: float,
@@ -51,15 +66,13 @@ def compute_oaem(
     Computes an Obstruction Adaptive Elevation Model (OAEM) for a given position.
 
     Args:
-        geoid (Geoid): The geoid object that provides the geoid height for a given position.
-        edge_provider (EdgeProvider): The edge provider object that provides the edges for a given position.
         pos_x (float): The x-coordinate of the position.
         pos_y (float): The y-coordinate of the position.
         pos_z (float): The z-coordinate of the position.
         epsg (int): The EPSG code of the position.
 
     Returns:
-        Oaem: An Obstruction Adaptive Elevation Model (OAEM) that stores the elevation data for the given position in space.
+        Oaem: An Obstruction Adaptive Elevation Model (OAEM) that stores the elevation data for the given position.
     """
     query_time = time.time()
     pos = PointSet(xyz=np.array([pos_x, pos_y, pos_z]), epsg=epsg, init_local_transformer=False)
@@ -69,7 +82,7 @@ def compute_oaem(
     oaem = oaem_from_edge_list(edge_list, pos)
     response_time = time.time()
 
-    logger.debug(
+    logger.info(
         "Computed OAEM for position [%.3f, %.3f, %.3f], EPSG: %i in %.3f ms",
         pos_x,
         pos_y,
@@ -82,15 +95,14 @@ def compute_oaem(
 
 def oaem_from_edge_list(edge_list: list[Edge], pos: PointSet) -> Oaem:
     """
-    Computes an Obstruction Adaptive Elevation Model (OAEM) for a given position in space from a list of edges that define
-    the building roof footprints.
+    Computes an Obstruction Adaptive Elevation Model (OAEM) for a given position from a list of building edges.
 
     Args:
-        edge_list (list[Edge]): A list of edges that define the building roof footprints.
-        pos (PointSet): The position in space.
+        edge_list (list[Edge]): A list of edges that define the building boundaries.
+        pos (PointSet): The query position.
 
     Returns:
-        Oaem: An Obstruction Adaptive Elevation Model (OAEM) that stores the elevation data for the given position in space.
+        Oaem: An Obstruction Adaptive Elevation Model (OAEM) that stores the elevation data for the given position.
     """
     if not edge_list:
         return Oaem(pos=pos)
@@ -114,11 +126,11 @@ def oaem_from_edge_list(edge_list: list[Edge], pos: PointSet) -> Oaem:
 
 def build_interval_tree(edge_list: list[Edge], pos: np.ndarray) -> IntervalTree:
     """
-    Builds an interval tree from a list of edges that define the building roof footprints and a position in space.
+    Builds an interval tree from a list of edges that define the building boundaries and a position.
 
     Args:
-        edge_list (list[Edge]): A list of edges that define the building roof footprints.
-        pos (np.ndarray): The position in space as a numpy array of shape (3,) in the format (x, y, z).
+        edge_list (list[Edge]): A list of edges that define the building boundaries.
+        pos (np.ndarray): The position as a numpy array of shape (3,) in the format (x, y, z).
 
     Returns:
         IntervalTree: An interval tree that stores the intervals of azimuth angles that intersect with the edges.

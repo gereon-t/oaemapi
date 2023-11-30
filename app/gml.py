@@ -1,6 +1,7 @@
 import os
 from dataclasses import dataclass, field
 from functools import lru_cache
+from typing import TypeAlias
 
 import numpy as np
 import xmltodict
@@ -9,9 +10,17 @@ from scipy.spatial import KDTree
 from app.config import N_RANGE
 from app.edge import Edge
 
+CoordinateList: TypeAlias = list[list[float]]
+
 
 @dataclass
 class GMLFileList:
+    """
+    Hashable list of gml files.
+
+    This class is used to cache the gml files for a given position.
+    """
+
     data_path: str
     files: list[str] = field(default_factory=list)
 
@@ -23,23 +32,27 @@ class GMLFileList:
 
 
 class GMLData:
-    def __init__(self, coordinates: list[float]) -> None:
+    """
+    Class representing the content of one or more gml files.
+
+    For efficient querying of the building edges, a KDTree is built from the coordinates.
+    """
+
+    def __init__(self, coordinates: CoordinateList) -> None:
         self.coordinates = np.array(coordinates)
         self.kdtree = KDTree(np.r_[self.coordinates[:, :2], self.coordinates[:, 3:5]])
-        self.edges = [
-            Edge(start=edge_coord[:3], end=edge_coord[3:])
-            for edge_coord in self.coordinates
-        ]
+        self.edges = [Edge(start=edge_coord[:3], end=edge_coord[3:]) for edge_coord in self.coordinates]
 
     def query_edges(self, pos: np.ndarray, n_range: float = N_RANGE) -> list[Edge]:
+        """
+        Returns a list of edges for a given position using the KDTree.
+        """
         query_indices = self.kdtree.query_ball_point(pos[:, :2].flatten(), r=n_range)
         unique_indices = {index % len(self.edges) for index in query_indices}
         return [self.edges[index] for index in unique_indices]
 
 
-def gml_file_picker(
-    data_path: str, pos: list[float], utm_zone: int = 32, lod: int = 2
-) -> GMLFileList:
+def gml_file_picker(data_path: str, pos: list[float], utm_zone: int = 32, lod: int = 2) -> GMLFileList:
     """
     Returns the relevant gml file(s) for the given position.
 
@@ -71,18 +84,15 @@ def gml_file_picker(
     return file_list
 
 
-def handle_surface_member(surface_member: dict) -> list[float]:
-    polygon = (
-        surface_member.get("gml:Polygon", {})
-        .get("gml:exterior", {})
-        .get("gml:LinearRing", {})
-        .get("gml:posList", {})
+def handle_surface_member(surface_member: dict) -> CoordinateList:
+    polygon: dict | str = (
+        surface_member.get("gml:Polygon", {}).get("gml:exterior", {}).get("gml:LinearRing", {}).get("gml:posList", {})
     )
 
     if isinstance(polygon, dict):
-        polygon = polygon.get("#text", None)
+        polygon = str(polygon.get("#text", ""))
 
-    if polygon is None:
+    if not polygon:
         return []
 
     coords = [float(c) for c in polygon.split(" ")]
@@ -96,17 +106,15 @@ def handle_surface_member(surface_member: dict) -> list[float]:
     return [coords[i : i + 6] for i in range(0, len(coords) - 3, 3)]
 
 
-def extract_surface_members(surface: dict) -> list[float]:
-    surface_members = (
-        surface.get("bldg:lod2MultiSurface", {})
-        .get("gml:MultiSurface", {})
-        .get("gml:surfaceMember", [])
+def extract_surface_members(surface: dict) -> CoordinateList:
+    surface_members: list | dict = (
+        surface.get("bldg:lod2MultiSurface", {}).get("gml:MultiSurface", {}).get("gml:surfaceMember", [])
     )
 
     if not surface_members:
         return []
 
-    coords = []
+    coords: CoordinateList = []
 
     if isinstance(surface_members, list):
         for surface_member in surface_members:
@@ -117,8 +125,8 @@ def extract_surface_members(surface: dict) -> list[float]:
     return coords
 
 
-def parse_building_bounds(bounds: dict) -> list[float]:
-    building_coordinates = []
+def parse_building_bounds(bounds: list[dict]) -> CoordinateList:
+    building_coordinates: CoordinateList = []
     for surfaces in bounds:
         for surface in surfaces.values():
             building_coordinates.extend(extract_surface_members(surface))
@@ -126,13 +134,14 @@ def parse_building_bounds(bounds: dict) -> list[float]:
     return building_coordinates
 
 
-def parse_building_data(building_data: dict) -> list[float]:
+def parse_building_data(building_data: dict) -> CoordinateList:
+    building_coordinates: CoordinateList = []
+
     if "bldg:Building" not in building_data:
-        return []
+        return building_coordinates
 
     building = building_data["bldg:Building"]
 
-    building_coordinates = []
     if "bldg:boundedBy" in building:
         bounded_by = [building["bldg:boundedBy"]]
         for bounds in bounded_by:
@@ -148,16 +157,15 @@ def parse_building_data(building_data: dict) -> list[float]:
     return building_coordinates
 
 
-def extract_lod2_coords(gml: str) -> list[float]:
+def extract_lod2_coords(gml: str) -> CoordinateList:
     data = xmltodict.parse(gml)
+    building_coordinates: CoordinateList = []
 
     if "core:CityModel" not in data:
-        return ""
+        return building_coordinates
 
     if "core:cityObjectMember" not in data["core:CityModel"]:
-        return ""
-
-    building_coordinates = []
+        return building_coordinates
 
     buildings = data["core:CityModel"]["core:cityObjectMember"]
 
@@ -170,11 +178,11 @@ def extract_lod2_coords(gml: str) -> list[float]:
     return building_coordinates
 
 
-def extract_lod1_coords(gml: str) -> list[float]:
+def extract_lod1_coords(gml: str) -> CoordinateList:
     data = xmltodict.parse(gml)
     cityobject_members = data.get("core:CityModel", {}).get("core:cityObjectMember", {})
 
-    building_coordinates = []
+    building_coordinates: CoordinateList = []
     if not cityobject_members:
         return building_coordinates
 
@@ -197,7 +205,7 @@ def extract_lod1_coords(gml: str) -> list[float]:
     return building_coordinates
 
 
-def parse_lod1solid(lod1solid: dict) -> list[float]:
+def parse_lod1solid(lod1solid: dict) -> CoordinateList:
     """
     Parses the lod1Solid element of a building
 
@@ -214,10 +222,10 @@ def parse_lod1solid(lod1solid: dict) -> list[float]:
         .get("gml:surfaceMember", {})
     )
 
-    if not surface_members:
-        return []
+    building_coordinates: CoordinateList = []
 
-    building_coordinates = []
+    if not surface_members:
+        return building_coordinates
 
     for surface in surface_members:
         building_coordinates.extend(handle_surface_member(surface))
@@ -226,7 +234,7 @@ def parse_lod1solid(lod1solid: dict) -> list[float]:
 
 
 @lru_cache(maxsize=128)
-def parse_citycml_lod2(filepath: str) -> list[float]:
+def parse_citycml_lod2(filepath: str) -> CoordinateList:
     if not filepath.endswith(".gml"):
         return []
 
@@ -236,7 +244,7 @@ def parse_citycml_lod2(filepath: str) -> list[float]:
 
 
 @lru_cache(maxsize=128)
-def parse_citycml_lod1(filepath: str) -> list[float]:
+def parse_citycml_lod1(filepath: str) -> CoordinateList:
     if not filepath.endswith(".gml"):
         return []
 
@@ -247,9 +255,7 @@ def parse_citycml_lod1(filepath: str) -> list[float]:
 
 def main() -> None:
     data_path = "data/bonn_lod1/"
-    file_list = gml_file_picker(
-        data_path=data_path, pos=[364937.1665, 5621232.2154, 107.9581], lod=1
-    )
+    file_list = gml_file_picker(data_path=data_path, pos=[364937.1665, 5621232.2154, 107.9581], lod=1)
     coords = []
 
     for file in file_list.files:

@@ -11,10 +11,21 @@ from app.oaem import Oaem
 
 @dataclass
 class SunTrack:
-    pos: PointSet
+    """
+    Represents a sun track for a given position.
+    """
+
+    pos_x: float
+    pos_y: float
+    pos_z: float
+    epsg: int = 25832
     vis_changes: np.ndarray = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
+        self.pos = PointSet(
+            xyz=np.array([self.pos_x, self.pos_y, self.pos_z]),
+            epsg=self.epsg,
+        )
         self.pos.to_epsg(4326)
 
     def get_sun_track(
@@ -52,9 +63,7 @@ class SunTrack:
         solpos = solarposition.get_solarposition(
             time=date, latitude=self.pos.x, longitude=self.pos.y, altitude=self.pos.z
         )
-        return float(np.deg2rad(solpos["azimuth"].iloc[0])), float(
-            np.deg2rad(solpos["apparent_elevation"].iloc[0])
-        )
+        return float(np.deg2rad(solpos["azimuth"].iloc[0])), float(np.deg2rad(solpos["apparent_elevation"].iloc[0]))
 
     def intersect_with_oaem(self, oaem: Oaem) -> None:
         date = datetime.now().astimezone()

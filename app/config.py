@@ -34,5 +34,5 @@ logging.basicConfig(
 )
 logger = logging.getLogger("root")
 
-with open("./app/version", "r") as f:
+with open("./app/version", "r", encoding="utf-8") as f:
     VERSION = f.read().strip()

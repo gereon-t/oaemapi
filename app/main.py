@@ -1,17 +1,14 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-
-from app import routes
 from app.config import VERSION
+from app.routes import router
 
 app = FastAPI(
     title="OAEM-API",
     version=VERSION,
-    docs_url=None,
-    edoc_url=None,
 )
-app.include_router(routes.router)
+app.include_router(router)
 app.mount("/static", StaticFiles(directory="./app/static"), name="static")
 
 

@@ -75,9 +75,6 @@ def parse_response(response: requests.Response) -> list[Edge]:
         list[Edge]: A list of edges representing the building roof footprints.
     """
     logger.debug("parsing response ...")
-    building_coordinates = np.array(extract_lod1_coords(response.content))
+    building_coordinates: np.ndarray = np.array(extract_lod1_coords(str(response.content, encoding="utf-8")))
 
-    return [
-        Edge(start=edge_coord[:3], end=edge_coord[3:])
-        for edge_coord in building_coordinates
-    ]
+    return [Edge(start=edge_coord[:3], end=edge_coord[3:]) for edge_coord in building_coordinates]

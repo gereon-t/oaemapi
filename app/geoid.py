@@ -1,7 +1,6 @@
 from enum import Enum
 from functools import lru_cache
 
-import numpy as np
 from pandas import read_csv
 from pointset import PointSet
 from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
@@ -56,9 +55,8 @@ class Geoid:
 
         # read csv
         data = read_csv(filename, header=None, delim_whitespace=True)
-        data = data.to_numpy()
 
-        self.pos = PointSet(xyz=data, epsg=epsg)
+        self.pos = PointSet(xyz=data.to_numpy(), epsg=epsg)
         self.epsg = epsg
 
         # Interpolator
@@ -76,7 +74,7 @@ class Geoid:
         )
 
     @lru_cache(maxsize=2048)
-    def interpolate(self, pos: PointSet) -> np.ndarray:
+    def interpolate(self, pos: PointSet) -> float:
         """
         Interpolates the geoid undulation for a given position.
 
