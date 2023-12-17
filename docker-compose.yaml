@@ -1,6 +1,6 @@
 services:
   oaemapi:
-    build: .
+    image: gtombrink/oaemapi:latest
     ports:
       - "8000:8000"
     volumes:

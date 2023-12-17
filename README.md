@@ -2,6 +2,10 @@
 ![](images/oaemapi.jpg)
 This API with a simple frontend computes an Obstruction Adaptive Elevation Mask (OAEM) for a given position using CityGML models. An OAEM describes the obstruction of the sky view, e.g. due to buildings, using azimuth and elevation pairs. The term Obstruction Adaptive Elevation Mask was first used by [Zimmermann 2019](https://www.researchgate.net/publication/329833465_GPS-Multipath_Analysis_using_Fresnel-Zones). The CityGML models are xml based representations of buildings and can either be retrieved from [local file storage](https://www.opengeodata.nrw.de/produkte/geobasis/3dg/lod2_gml/lod2_gml/) or from the [Web-Feature-Service (WFS) of Geobasis North Rhine-Westphalia (NRW)](https://www.wfs.nrw.de/geobasis/wfs_nw_3d-gebaeudemodell_lod1).
 
+This software uses and includes the Quasigeoid from
+
+> © [BKG](https://www.bkg.bund.de/) (Jahr des letzten Datenbezugs) [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) , Datenquellen: https://sgx.geodatenzentrum.de/web_public/Datenquellen_Quasigeoid.pdf
+
 The code is designed for LOD1 or LOD2 building models from Geobasis NRW, Germany. In its current state, it is therefore only applicable within North Rhine-Westphalia, Germany.
 
 An OAEM can be useful in various scenarios including GNSS Signal filtering:
@@ -10,25 +14,33 @@ An OAEM can be useful in various scenarios including GNSS Signal filtering:
 
 
 
-## Installation
+## Install and run
+
+Using Docker Compose:
+
+```yaml
+services:
+  oaemapi:
+    image: gtombrink/oaemapi:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./gmldata:/app/gmldata
+      - ./config.py:/app/config.py
+
+volumes:
+  gmldata:
+```
+
+Start the container with:
 
 ```bash
-git clone https://github.com/gereon-t/oaemapi.git
+docker-compose up -d
 ```
 
-```bash	
-cd oaemapi
-```
+The CityGML data is stored in the gmldata volume. The config.py file is mounted to the container to configure the API. The API is then available at http://localhost:8000.
 
-```bash
-poetry install
-```
 
-## Usage
-Run the server with
-```bash
-uvicorn main:app --host 0.0.0.0
-```
 
 ## Endpoints
 
