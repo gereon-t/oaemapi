@@ -4,8 +4,8 @@ import numpy as np
 
 OAEM_RES = np.deg2rad(1)
 
-N_RANGE = 80
-N_RES = 20
+N_RANGE = 80  # radius of relevant buildings in meters
+N_RES = 20  #
 
 ROUNDING_EPSG = 25832
 
@@ -24,7 +24,7 @@ WFS_EPSG = 25832
 WFS_URL = "https://www.wfs.nrw.de/geobasis/wfs_nw_3d-gebaeudemodell_lod1"
 WFS_BASE_REQUEST = "Service=WFS&REQUEST=GetFeature&VERSION=1.1.0&TYPENAME=bldg:Building"
 
-APP_HOST = "127.0.0.1"
+APP_HOST = "0.0.0.0"
 APP_PORT = 8000
 logging.basicConfig(
     format="%(levelname)-8s %(asctime)s.%(msecs)03d - %(message)s",
