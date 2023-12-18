@@ -1,17 +1,20 @@
-# Obstruction Adaptive Elevation Mask API
-![](images/oaemapi.jpg)
-This API with a simple frontend computes an Obstruction Adaptive Elevation Mask (OAEM) for a given position using CityGML models. An OAEM describes the obstruction of the sky view, e.g. due to buildings, using azimuth and elevation pairs. The term Obstruction Adaptive Elevation Mask was first used by [Zimmermann 2019](https://www.researchgate.net/publication/329833465_GPS-Multipath_Analysis_using_Fresnel-Zones). The CityGML models are xml based representations of buildings and can either be retrieved from [local file storage](https://www.opengeodata.nrw.de/produkte/geobasis/3dg/lod2_gml/lod2_gml/) or from the [Web-Feature-Service (WFS) of Geobasis North Rhine-Westphalia (NRW)](https://www.wfs.nrw.de/geobasis/wfs_nw_3d-gebaeudemodell_lod1).
+<div align="center">
+<h1>Obstruction Adaptive Elevation Mask API</h1>
 
-This software uses and includes the Quasigeoid from
+#### API to query an Obstruction Adaptive Elevation Mask (OAEM) for a given position using CityGML models.
 
-> © [BKG](https://www.bkg.bund.de/) (Jahr des letzten Datenbezugs) [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) , Datenquellen: https://sgx.geodatenzentrum.de/web_public/Datenquellen_Quasigeoid.pdf
+<img src="images/oaemapi.jpg" width=400/>
+</div>
 
-The code is designed for LOD1 or LOD2 building models from Geobasis NRW, Germany. In its current state, it is therefore only applicable within North Rhine-Westphalia, Germany.
+An Obstruction Adaptive Elevation Mask (OAEM) describes the obstruction of the sky view, e.g. due to buildings, using azimuth and elevation pairs. The term Obstruction Adaptive Elevation Mask was first used by [Zimmermann 2019](https://www.researchgate.net/publication/329833465_GPS-Multipath_Analysis_using_Fresnel-Zones). The CityGML models are XML based representations of buildings and can either be retrieved from [local file storage](https://www.opengeodata.nrw.de/produkte/geobasis/3dg/lod2_gml/lod2_gml/) or from the [Web-Feature-Service (WFS) of Geobasis North Rhine-Westphalia (NRW)](https://www.wfs.nrw.de/geobasis/wfs_nw_3d-gebaeudemodell_lod1). The code is designed for LOD1 or LOD2 building models from Geobasis NRW, Germany. In its current state, it is therefore only applicable within North Rhine-Westphalia, Germany.
 
 An OAEM can be useful in various scenarios including GNSS Signal filtering:
 
 ![](images/oaem.gif)
 
+This software uses and includes the Quasigeoid from:
+
+> © [BKG](https://www.bkg.bund.de/) (Jahr des letzten Datenbezugs) [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) , Datenquellen: https://sgx.geodatenzentrum.de/web_public/Datenquellen_Quasigeoid.pdf
 
 
 ## Install and run
@@ -73,7 +76,7 @@ ROUNDING_EPSG = 25832  # EPSG code of the coordinate system used for rounding (r
 
 FAVICON_PATH = "./app/data/favicon.ico"
 
-GEOID_FILE = "./app/data/geoid.txt"
+GEOID_FILE = "./app/data/geoid.txt" # needs to be downloaded from BKG
 GEOID_EPSG = 4258
 GEOID_RES = 100
 
@@ -100,4 +103,4 @@ with open("./app/version", "r", encoding="utf-8") as f:
     VERSION = f.read().strip()
 ```
 
-The geoid file is available at [BKG](https://gdz.bkg.bund.de/index.php/default/quasigeoid-der-bundesrepublik-deutschland-quasigeoid.html). The CityGML data can be downloaded from [Geobasis NRW](https://www.opengeodata.nrw.de/produkte/geobasis/3dg/lod2_gml/lod2_gml/). The data is available under the [DL-DE->Zero-2.0](https://www.govdata.de/dl-de/zero-2-0) license.
+The geoid file is available at [BKG](https://gdz.bkg.bund.de/index.php/default/quasigeoid-der-bundesrepublik-deutschland-quasigeoid.html). The CityGML data can be downloaded from [Geobasis NRW](https://www.opengeodata.nrw.de/produkte/geobasis/3dg/lod2_gml/lod2_gml/). The data is available under the [DL-DE->Zero-2.0](https://www.govdata.de/dl-de/zero-2-0) license. Alternatively, the data can be retrieved from the [WFS of Geobasis NRW](https://www.wfs.nrw.de/geobasis/wfs_nw_3d-gebaeudemodell_lod1) by setting `EDGE_SOURCE` to `FILE`. The WFS is only available for LOD1 buildings.
