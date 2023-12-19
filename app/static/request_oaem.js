@@ -21,8 +21,8 @@ function handle_plot_response(response) {
 }
 
 function request_oaem(position) {
-    const latitude = position.coords.latitude.toFixed(6);
-    const longitude = position.coords.longitude.toFixed(6);
+    const latitude = position.coords.latitude.toFixed(7);
+    const longitude = position.coords.longitude.toFixed(7);
     let height = position.coords.altitude;
     let { heading } = position.coords;
 
@@ -30,15 +30,15 @@ function request_oaem(position) {
     const winheight = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight) - 20;
 
     if (height === null) {
-        height = 0.0.toFixed(1);
+        height = 0.0.toFixed(2);
     } else {
-        height = height.toFixed(1);
+        height = height.toFixed(2);
     }
 
     if (heading === null) {
-        heading = 0.0.toFixed(1)
+        heading = 0.0.toFixed(2)
     } else {
-        heading = heading.toFixed(1)
+        heading = heading.toFixed(2)
     }
 
     document.getElementById('position').innerText = `Current Position: ${latitude}°, ${longitude}°, ${height} m`;

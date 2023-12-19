@@ -40,13 +40,18 @@ class GMLData:
 
     def __init__(self, coordinates: CoordinateList) -> None:
         self.coordinates = np.array(coordinates)
-        self.kdtree = KDTree(np.r_[self.coordinates[:, :2], self.coordinates[:, 3:5]])
-        self.edges = [Edge(start=edge_coord[:3], end=edge_coord[3:]) for edge_coord in self.coordinates]
+        self.kdtree = KDTree(np.r_[self.coordinates[:, :2], self.coordinates[:, 3:5]]) if coordinates else None
+        self.edges = (
+            [Edge(start=edge_coord[:3], end=edge_coord[3:]) for edge_coord in self.coordinates] if coordinates else []
+        )
 
     def query_edges(self, pos: np.ndarray, n_range: float = N_RANGE) -> list[Edge]:
         """
         Returns a list of edges for a given position using the KDTree.
         """
+        if not self.edges:
+            return []
+
         query_indices = self.kdtree.query_ball_point(pos[:, :2].flatten(), r=n_range)
         unique_indices = {index % len(self.edges) for index in query_indices}
         return [self.edges[index] for index in unique_indices]
