@@ -25,12 +25,6 @@ async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "version": VERSION})
 
 
-@router.get("/privacy_policy", include_in_schema=False)
-async def privacy_policy(request: Request):
-    """Privacy policy endpoint."""
-    return templates.TemplateResponse("privacy_policy.html", {"request": request})
-
-
 @router.get("/oaem")
 async def request_oaem(oaem: Annotated[Oaem, Depends(compute_oaem)]) -> dict:
     """
